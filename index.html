@@ -19,7 +19,7 @@
 
   <main class="container mx-auto px-4 py-6">
     <!-- Filters -->
-    <div class="bg-white rounded-xl shadow p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="bg-white rounded-xl shadow p-4 mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
       <div>
         <label class="block text-sm mb-1">بحث عام</label>
         <input id="q" type="text" placeholder="ابحث بتاريخ أو سائق أو رقم مركبة..."
@@ -28,6 +28,12 @@
       <div>
         <label class="block text-sm mb-1">الشهر</label>
         <select id="monthSelect" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
+          <option value="">الكل</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm mb-1">رقم المركبة</label>
+        <select id="vehicleSelect" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
           <option value="">الكل</option>
         </select>
       </div>
@@ -49,7 +55,7 @@
         <h3 id="k_weight" class="text-3xl font-bold text-green-600">0</h3>
       </div>
       <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-gray-500">متوسط الوزن</p>
+        <p class="text-gray-500">متوسط حمولة الرحلة</p>
         <h3 id="k_avg" class="text-3xl font-bold text-purple-600">0</h3>
       </div>
       <div class="bg-white rounded-xl shadow p-6">
@@ -70,7 +76,7 @@
               <th class="px-4 py-2">الشهر</th>
               <th class="px-4 py-2">تاريخ التوزين الثاني</th>
               <th class="px-4 py-2">السائق</th>
-              <th class="px-4 py-2">صافي التحميل (كجم)</th>
+              <th class="px-4 py-2">صافي التحميل (طن)</th>
               <th class="px-4 py-2">رقم المركبة</th>
             </tr>
           </thead>
@@ -114,9 +120,13 @@ function toNumber(v) {
 function applyFilters() {
   const q = document.getElementById("q").value.trim();
   const m = document.getElementById("monthSelect").value;
+  const v = document.getElementById("vehicleSelect").value;
+
   VIEW = ALL.filter(r => {
     const byMonth = m ? (String(r[COL.month] || "").trim() === m) : true;
-    if (!byMonth) return false;
+    const byVehicle = v ? (String(r[COL.vehicle] || "").trim() === v) : true;
+    if (!byMonth || !byVehicle) return false;
+
     if (!q) return true;
     const hay = [r[COL.month], r[COL.date], r[COL.driver], r[COL.weight], r[COL.vehicle]]
       .map(x => (x==null?"":String(x))).join(" ").toLowerCase();
@@ -131,8 +141,8 @@ function updateKPIs() {
   const avgW = trips ? Math.round(totalW / trips) : 0;
   const drivers = new Set(VIEW.map(r => r[COL.driver]).filter(Boolean));
   document.getElementById("k_trips").textContent  = trips.toLocaleString();
-  document.getElementById("k_weight").textContent = totalW.toLocaleString() + " كجم";
-  document.getElementById("k_avg").textContent    = avgW.toLocaleString() + " كجم";
+  document.getElementById("k_weight").textContent = (totalW/1000).toFixed(2).toLocaleString() + " طن";
+  document.getElementById("k_avg").textContent    = (avgW/1000).toFixed(2).toLocaleString() + " طن";
   document.getElementById("k_drivers").textContent= drivers.size.toLocaleString();
 }
 
@@ -153,7 +163,7 @@ function updateTable() {
       <td class="px-4 py-2">${r[COL.month] || ""}</td>
       <td class="px-4 py-2">${r[COL.date] || ""}</td>
       <td class="px-4 py-2">${r[COL.driver] || ""}</td>
-      <td class="px-4 py-2">${toNumber(r[COL.weight]).toLocaleString()}</td>
+      <td class="px-4 py-2">${(toNumber(r[COL.weight])/1000).toFixed(2)}</td>
       <td class="px-4 py-2">${r[COL.vehicle] || ""}</td>
     `;
     tb.appendChild(tr);
@@ -167,6 +177,17 @@ function fillMonthSelect() {
   months.forEach(m => {
     const opt = document.createElement("option");
     opt.value = opt.textContent = m;
+    sel.appendChild(opt);
+  });
+}
+
+/* مركبات */
+function fillVehicleSelect() {
+  const sel = document.getElementById("vehicleSelect");
+  const vehicles = Array.from(new Set(ALL.map(r => r[COL.vehicle]).filter(Boolean)));
+  vehicles.forEach(v => {
+    const opt = document.createElement("option");
+    opt.value = opt.textContent = v;
     sel.appendChild(opt);
   });
 }
@@ -199,6 +220,7 @@ async function loadData() {
       return obj;
     });
     fillMonthSelect();
+    fillVehicleSelect();
     render();
   } catch (e) {
     console.error("خطأ في جلب/قراءة الشيت:", e);
@@ -209,9 +231,11 @@ async function loadData() {
 /* Events */
 document.getElementById("q").addEventListener("input", render);
 document.getElementById("monthSelect").addEventListener("change", render);
+document.getElementById("vehicleSelect").addEventListener("change", render);
 document.getElementById("resetBtn").addEventListener("click", () => {
   document.getElementById("q").value = "";
   document.getElementById("monthSelect").value = "";
+  document.getElementById("vehicleSelect").value = "";
   render();
 });
 
