@@ -19,7 +19,7 @@
 
   <main class="container mx-auto px-4 py-6">
     <!-- Filters -->
-    <div class="bg-white rounded-xl shadow p-4 mb-6 grid grid-cols-1 md:grid-cols-6 gap-4">
+    <div class="bg-white rounded-xl shadow p-4 mb-6 grid grid-cols-1 md:grid-cols-5 gap-4">
       <div>
         <label class="block text-sm mb-1">بحث عام</label>
         <input id="q" type="text" placeholder="ابحث بتاريخ أو سائق أو رقم مركبة..."
@@ -38,13 +38,8 @@
         </select>
       </div>
       <div>
-        <label class="block text-sm mb-1">من تاريخ</label>
-        <input id="dateFrom" type="date"
-               class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
-      </div>
-      <div>
-        <label class="block text-sm mb-1">إلى تاريخ</label>
-        <input id="dateTo" type="date"
+        <label class="block text-sm mb-1">التاريخ</label>
+        <input id="dateExact" type="date"
                class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
       </div>
       <div class="flex items-end">
@@ -131,19 +126,22 @@ function applyFilters() {
   const q = document.getElementById("q").value.trim();
   const m = document.getElementById("monthSelect").value;
   const v = document.getElementById("vehicleSelect").value;
-  const from = document.getElementById("dateFrom").value;
-  const to   = document.getElementById("dateTo").value;
+  const d = document.getElementById("dateExact").value;
 
   VIEW = ALL.filter(r => {
     const byMonth   = m ? (String(r[COL.month] || "").trim() === m) : true;
     const byVehicle = v ? (String(r[COL.vehicle] || "").trim() === v) : true;
 
-    // فلتر التاريخ
+    // فلتر التاريخ (يوم واحد فقط) + استبعاد السجلات الفارغة
     let byDate = true;
-    if (from || to) {
-      const recordDate = new Date(r[COL.date]);
-      if (from && recordDate < new Date(from)) byDate = false;
-      if (to   && recordDate > new Date(to))   byDate = false;
+    if (d) {
+      if (!r[COL.date]) {
+        byDate = false; // تجاهل السجلات اللي ما فيها تاريخ
+      } else {
+        const recordDate = new Date(r[COL.date]);
+        const exactDate  = new Date(d);
+        byDate = recordDate.toDateString() === exactDate.toDateString();
+      }
     }
 
     if (!byMonth || !byVehicle || !byDate) return false;
@@ -253,14 +251,12 @@ async function loadData() {
 document.getElementById("q").addEventListener("input", render);
 document.getElementById("monthSelect").addEventListener("change", render);
 document.getElementById("vehicleSelect").addEventListener("change", render);
-document.getElementById("dateFrom").addEventListener("change", render);
-document.getElementById("dateTo").addEventListener("change", render);
+document.getElementById("dateExact").addEventListener("change", render);
 document.getElementById("resetBtn").addEventListener("click", () => {
   document.getElementById("q").value = "";
   document.getElementById("monthSelect").value = "";
   document.getElementById("vehicleSelect").value = "";
-  document.getElementById("dateFrom").value = "";
-  document.getElementById("dateTo").value = "";
+  document.getElementById("dateExact").value = "";
   render();
 });
 
