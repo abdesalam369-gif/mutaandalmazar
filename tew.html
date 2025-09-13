@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>نظام إدارة بيانات النقل</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50">
+
+  <!-- Header -->
+  <header class="bg-blue-600 text-white p-6">
+    <h1 class="text-2xl font-bold">نظام إدارة بيانات النقل</h1>
+    <p class="text-blue-100">بلدية مؤتة والمزار</p>
+  </header>
+
+  <!-- Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 p-6">
+    <div class="bg-white p-6 rounded shadow">
+      <p class="text-gray-500">إجمالي الرحلات</p>
+      <h3 id="totalTrips" class="text-2xl font-bold text-blue-600">0</h3>
+    </div>
+    <div class="bg-white p-6 rounded shadow">
+      <p class="text-gray-500">إجمالي الوزن</p>
+      <h3 id="totalWeight" class="text-2xl font-bold text-green-600">0</h3>
+    </div>
+    <div class="bg-white p-6 rounded shadow">
+      <p class="text-gray-500">متوسط الوزن</p>
+      <h3 id="avgWeight" class="text-2xl font-bold text-purple-600">0</h3>
+    </div>
+    <div class="bg-white p-6 rounded shadow">
+      <p class="text-gray-500">عدد السائقين</p>
+      <h3 id="driversCount" class="text-2xl font-bold text-orange-600">0</h3>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+    <div class="bg-white p-6 rounded shadow">
+      <h3 class="mb-4">توزيع الوزن حسب اليوم</h3>
+      <canvas id="dailyWeightChart"></canvas>
+    </div>
+    <div class="bg-white p-6 rounded shadow">
+      <h3 class="mb-4">توزيع الرحلات حسب السائق</h3>
+      <canvas id="driverTripsChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="p-6">
+    <div class="bg-white rounded shadow overflow-x-auto">
+      <table class="min-w-full text-sm text-right">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-4 py-2">التاريخ</th>
+            <th class="px-4 py-2">السائق</th>
+            <th class="px-4 py-2">الوزن الصافي</th>
+            <th class="px-4 py-2">نوع الحركة</th>
+            <th class="px-4 py-2">المركبة</th>
+          </tr>
+        </thead>
+        <tbody id="tripsTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+async function loadData() {
+  const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=0&single=true&output=csv";
+  const response = await fetch(url);
+  const text = await response.text();
+
+  // 👇 معالجة الـ CSV
+  const rows = text.trim().split("\n").map(r => r.split(","));
+  const headers = rows[0].map(h => h.trim());
+  const records = rows.slice(1).map(r => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = (r[i] || "").trim());
+    return obj;
+  });
+
+  // 👇 فقط للتجربة: اطبع أول صف في الكونسول
+  console.log("Headers:", headers);
+  console.log("First row:", records[0]);
+
+  // 👇 تحويل الوزن لرقم (يشيل كجم أو فاصلة)
+  const parseWeight = (val) => {
+    if (!val) return 0;
+    return parseInt(val.replace(/[^\d]/g, "")) || 0;
+  };
+
+  // حساب المؤشرات
+  const totalTrips = records.length;
+  const totalWeight = records.reduce((s, r) => s + parseWeight(r["الوزن الصافي"]), 0);
+  const avgWeight = totalTrips > 0 ? Math.round(totalWeight / totalTrips) : 0;
+  const drivers = [...new Set(records.map(r => r["السائق"]))];
+
+  document.getElementById("totalTrips").textContent = totalTrips;
+  document.getElementById("totalWeight").textContent = totalWeight + " كجم";
+  document.getElementById("avgWeight").textContent = avgWeight + " كجم";
+  document.getElementById("driversCount").textContent = drivers.length;
+
+  // جدول
+  const table = document.getElementById("tripsTable");
+  table.innerHTML = "";
+  records.forEach(r => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="px-4 py-2">${r["التاريخ"]}</td>
+      <td class="px-4 py-2">${r["السائق"]}</td>
+      <td class="px-4 py-2">${r["الوزن الصافي"]}</td>
+      <td class="px-4 py-2">${r["نوع الحركة"]}</td>
+      <td class="px-4 py-2">${r["المركبة"]}</td>
+    `;
+    table.appendChild(tr);
+  });
+
+  // الرسم البياني اليومي
+  const days = [...new Set(records.map(r => r["التاريخ"]))];
+  const dayWeights = days.map(d => 
+    records.filter(r => r["التاريخ"] === d)
+           .reduce((s, r) => s + parseWeight(r["الوزن الصافي"]), 0)
+  );
+
+  new Chart(document.getElementById("dailyWeightChart"), {
+    type: "bar",
+    data: {
+      labels: days,
+      datasets: [{
+        label: "الوزن اليومي (كجم)",
+        data: dayWeights,
+        backgroundColor: "rgba(59,130,246,0.6)"
+      }]
+    }
+  });
+
+  // توزيع الرحلات حسب السائق
+  const driverCounts = drivers.map(d => 
+    records.filter(r => r["السائق"] === d).length
+  );
+
+  new Chart(document.getElementById("driverTripsChart"), {
+    type: "doughnut",
+    data: {
+      labels: drivers,
+      datasets: [{
+        data: driverCounts,
+        backgroundColor: [
+          "rgba(59,130,246,0.7)", "rgba(16,185,129,0.7)",
+          "rgba(245,158,11,0.7)", "rgba(239,68,68,0.7)",
+          "rgba(139,92,246,0.7)", "rgba(20,184,166,0.7)"
+        ]
+      }]
+    }
+  });
+}
+
+document.addEventListener("DOMContentLoaded", loadData);
+</script>
+</body>
+</html>
