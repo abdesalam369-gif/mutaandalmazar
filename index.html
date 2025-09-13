@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>لوحة بيانات النقل</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- PapaParse لقراءة CSV بشكل موثوق -->
+  <!-- PapaParse لقراءة CSV -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.5.2/papaparse.min.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-900">
@@ -59,10 +58,6 @@
       </div>
     </div>
 
-    <!-- Charts -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-    </div>
-
     <!-- Table -->
     <div class="bg-white rounded-xl shadow overflow-hidden">
       <div class="p-4 border-b">
@@ -87,7 +82,7 @@
   </main>
 
 <script>
-/* === إعدادات الأعمدة (غيّرها هنا فقط إذا تغيّرت أسماء العناوين في الشيت) === */
+/* === إعدادات الأعمدة === */
 const COL = {
   month: "الشهر",
   date: "تاريخ التوزين الثاني",
@@ -101,65 +96,56 @@ const CSV_URL =
  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=0&single=true&output=csv";
 
 /* === متغيّرات عامة === */
-let ALL = [];       // كل السجلات من الشيت
-let VIEW = [];      // السجلات بعد الفلاتر
-let dailyChart, driverChart;
+let ALL = [];
+let VIEW = [];
 
-/* تحويل الأرقام العربية/الممزوجة إلى رقم */
+/* تحويل الأرقام */
 function toNumber(v) {
   if (v == null) return 0;
   let s = String(v).trim();
-  // تحويل الأرقام العربية الشرقية إلى لاتينية
   const arabicMap = {'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
   s = s.replace(/[٠-٩]/g, d => arabicMap[d] || d);
-  // إزالة كل ما ليس رقمًا أو نقطة عشرية
   s = s.replace(/[^\d.]/g, "");
   const n = parseFloat(s);
   return isNaN(n) ? 0 : n;
 }
 
-/* فلترة بحسب الشهر والبحث العام */
+/* فلترة */
 function applyFilters() {
   const q = document.getElementById("q").value.trim();
   const m = document.getElementById("monthSelect").value;
-
   VIEW = ALL.filter(r => {
     const byMonth = m ? (String(r[COL.month] || "").trim() === m) : true;
     if (!byMonth) return false;
     if (!q) return true;
-    const hay = [
-      r[COL.month], r[COL.date], r[COL.driver],
-      r[COL.weight], r[COL.vehicle]
-    ].map(x => (x==null?"":String(x))).join(" ").toLowerCase();
+    const hay = [r[COL.month], r[COL.date], r[COL.driver], r[COL.weight], r[COL.vehicle]]
+      .map(x => (x==null?"":String(x))).join(" ").toLowerCase();
     return hay.includes(q.toLowerCase());
   });
 }
 
-/* تحديث المؤشرات */
+/* KPIs */
 function updateKPIs() {
   const trips = VIEW.length;
   const totalW = VIEW.reduce((s,r)=> s + toNumber(r[COL.weight]), 0);
   const avgW = trips ? Math.round(totalW / trips) : 0;
   const drivers = new Set(VIEW.map(r => r[COL.driver]).filter(Boolean));
-
   document.getElementById("k_trips").textContent  = trips.toLocaleString();
   document.getElementById("k_weight").textContent = totalW.toLocaleString() + " كجم";
   document.getElementById("k_avg").textContent    = avgW.toLocaleString() + " كجم";
   document.getElementById("k_drivers").textContent= drivers.size.toLocaleString();
 }
 
-/* تحديث الجدول */
+/* جدول */
 function updateTable() {
   const tb = document.getElementById("tbody");
   const empty = document.getElementById("emptyState");
   tb.innerHTML = "";
-
   if (VIEW.length === 0) {
     empty.classList.remove("hidden");
     return;
   }
   empty.classList.add("hidden");
-
   VIEW.forEach(r => {
     const tr = document.createElement("tr");
     tr.className = "border-b hover:bg-gray-50";
@@ -174,50 +160,7 @@ function updateTable() {
   });
 }
 
-/* تحديث الرسوم */
-function updateCharts() {
-  // تدمير الرسوم القديمة إذا وجدت
-  if (dailyChart) dailyChart.destroy();
-  if (driverChart) driverChart.destroy();
-/*
-  // تجميع الوزن حسب التاريخ
-  const byDate = {};
-  VIEW.forEach(r => {
-    const d = (r[COL.date] || "").toString().trim();
-    if (!d) return;
-    byDate[d] = (byDate[d] || 0) + toNumber(r[COL.weight]);
-  });
-  const dateLabels = Object.keys(byDate).sort((a,b)=> new Date(a) - new Date(b));
-  const dateWeights = dateLabels.map(k => byDate[k]);
-
-  dailyChart = new Chart(document.getElementById("dailyChart"), {
-    type: "bar",
-    data: {
-      labels: dateLabels,
-      datasets: [{ label: "الوزن (كجم)", data: dateWeights, backgroundColor: "rgba(59,130,246,0.6)" }]
-    },
-    options: { responsive: true, maintainAspectRatio: false }
-  });
-*/
-  /*
-  // تجميع عدد الرحلات حسب السائق
-  const byDriver = {};
-  VIEW.forEach(r => {
-    const d = (r[COL.driver] || "").toString().trim();
-    if (!d) return;
-    byDriver[d] = (byDriver[d] || 0) + 1;
-  });
-  const driverLabels = Object.keys(byDriver);
-  const driverCounts = driverLabels.map(k => byDriver[k]);
-
-  driverChart = new Chart(document.getElementById("driverChart"), {
-    type: "doughnut",
-    data: { labels: driverLabels, datasets: [{ data: driverCounts }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins:{ legend:{ position:"right" } } }
-  });
-}
-
-/* تعبئة قائمة الأشهر من البيانات */
+/* أشهر */
 function fillMonthSelect() {
   const sel = document.getElementById("monthSelect");
   const months = Array.from(new Set(ALL.map(r => r[COL.month]).filter(Boolean)));
@@ -228,12 +171,11 @@ function fillMonthSelect() {
   });
 }
 
-/* إعادة الرسم الكامل بعد الفلاتر */
+/* Render */
 function render() {
   applyFilters();
   updateKPIs();
   updateTable();
-  updateCharts();
 }
 
 /* تحميل البيانات */
@@ -242,16 +184,13 @@ async function loadData() {
     const result = await new Promise((resolve, reject) => {
       Papa.parse(CSV_URL, {
         download: true,
-        header: true,          // يقرأ الصف الأول كعناوين (بالعربي)
+        header: true,
         skipEmptyLines: true,
         complete: resolve,
         error: reject
       });
     });
-
-    // صفوف جاهزة كمصفوفة كائنات
     ALL = result.data.map(row => {
-      // تنظيف فراغات العناوين والقيم
       const obj = {};
       Object.keys(row).forEach(k => {
         const kk = (k || "").trim();
@@ -259,16 +198,15 @@ async function loadData() {
       });
       return obj;
     });
-
     fillMonthSelect();
     render();
   } catch (e) {
     console.error("خطأ في جلب/قراءة الشيت:", e);
-    alert("تعذر تحميل البيانات من الشيت. تأكد أن الرابط منشور كـ CSV وأن العناوين مطابقة.");
+    alert("تعذر تحميل البيانات من الشيت.");
   }
 }
 
-/* أحداث الفلاتر */
+/* Events */
 document.getElementById("q").addEventListener("input", render);
 document.getElementById("monthSelect").addEventListener("change", render);
 document.getElementById("resetBtn").addEventListener("click", () => {
@@ -277,7 +215,7 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   render();
 });
 
-/* تشغيل */
+/* Start */
 document.addEventListener("DOMContentLoaded", loadData);
 </script>
 </body>
