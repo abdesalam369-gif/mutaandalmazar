@@ -1,171 +1,16 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>لوحة بيانات النقل</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- PapaParse لقراءة CSV -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.5.2/papaparse.min.js"></script>
-</head>
-<body class="bg-gray-50 text-gray-900">
-  <!-- Header -->
-  <header class="bg-blue-600 text-white p-6 shadow">
-    <div class="container mx-auto">
-      <h1 class="text-2xl font-bold">نظام إدارة بيانات النقل</h1>
-      <p class="text-blue-100">بلدية مؤتة والمزار</p>
-    </div>
-  </header>
-
-  <main class="container mx-auto px-4 py-6">
-    <!-- Filters -->
-    <div class="bg-white rounded-xl shadow p-4 mb-6 grid grid-cols-1 md:grid-cols-5 gap-4">
-      <div>
-        <label class="block text-sm mb-1">بحث عام</label>
-        <input id="q" type="text" placeholder="ابحث بتاريخ أو سائق أو رقم مركبة..."
-               class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
-      </div>
-      <div>
-        <label class="block text-sm mb-1">الشهر</label>
-        <select id="monthSelect" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
-          <option value="">الكل</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm mb-1">رقم المركبة</label>
-        <select id="vehicleSelect" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
-          <option value="">الكل</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm mb-1">التاريخ</label>
-        <input id="dateExact" type="date"
-               class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
-      </div>
-      <div class="flex items-end">
-        <button id="resetBtn" class="w-full md:w-auto bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">
-          إعادة تعيين الفلاتر
-        </button>
-      </div>
-    </div>
-
-    <!-- KPIs -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-      <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-gray-500">إجمالي الرحلات</p>
-        <h3 id="k_trips" class="text-3xl font-bold text-blue-600">0</h3>
-      </div>
-      <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-gray-500">إجمالي الوزن</p>
-        <h3 id="k_weight" class="text-3xl font-bold text-green-600">0</h3>
-      </div>
-      <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-gray-500">متوسط حمولة الرحلة</p>
-        <h3 id="k_avg" class="text-3xl font-bold text-purple-600">0</h3>
-      </div>
-      <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-gray-500">عدد السائقين</p>
-        <h3 id="k_drivers" class="text-3xl font-bold text-orange-600">0</h3>
-      </div>
-    </div>
-
-    <!-- Table -->
-    <div class="bg-white rounded-xl shadow overflow-hidden">
-      <div class="p-4 border-b">
-        <h3 class="font-semibold">سجل الرحلات</h3>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-sm text-right">
-          <thead class="bg-gray-100">
-            <tr>
-              <th class="px-4 py-2">الشهر</th>
-              <th class="px-4 py-2">تاريخ التوزين الثاني</th>
-              <th class="px-4 py-2">السائق</th>
-              <th class="px-4 py-2">صافي التحميل (طن)</th>
-              <th class="px-4 py-2">رقم المركبة</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
-      <div id="emptyState" class="p-6 text-center text-gray-500 hidden">لا توجد بيانات مطابقة.</div>
-    </div>
-  </main>
-
-<script>
-/* === إعدادات الأعمدة === */
-const COL = {
-  month: "الشهر",
-  date: "تاريخ التوزين الثاني",
-  driver: "السائق",
-  weight: "صافي التحميل",
-  vehicle: "رقم المركبة"
-};
-
-/* === رابط الشيت CSV === */
-const CSV_URL =
- "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=0&single=true&output=csv";
-
-/* === متغيّرات عامة === */
-let ALL = [];
-let VIEW = [];
-
-/* تحويل الأرقام */
-function toNumber(v) {
-  if (v == null) return 0;
-  let s = String(v).trim();
-  const arabicMap = {'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
-  s = s.replace(/[٠-٩]/g, d => arabicMap[d] || d);
-  s = s.replace(/[^\d.]/g, "");
-  const n = parseFloat(s);
-  return isNaN(n) ? 0 : n;
-}
-
-/* فلترة */
-function applyFilters() {
-  const q = document.getElementById("q").value.trim();
-  const m = document.getElementById("monthSelect").value;
-  const v = document.getElementById("vehicleSelect").value;
-  const d = document.getElementById("dateExact").value;
-
-  VIEW = ALL.filter(r => {
-    const byMonth   = m ? (String(r[COL.month] || "").trim() === m) : true;
-    const byVehicle = v ? (String(r[COL.vehicle] || "").trim() === v) : true;
-
-    // فلتر التاريخ (يوم واحد فقط) + استبعاد السجلات الفارغة
-    let byDate = true;
-    if (d) {
-      if (!r[COL.date]) {
-        byDate = false; // تجاهل السجلات اللي ما فيها تاريخ
-      } else {
-        const recordDate = new Date(r[COL.date]);
-        const exactDate  = new Date(d);
-        byDate = recordDate.toDateString() === exactDate.toDateString();
-      }
-    }
-
-    if (!byMonth || !byVehicle || !byDate) return false;
-
-    if (!q) return true;
-    const hay = [r[COL.month], r[COL.date], r[COL.driver], r[COL.weight], r[COL.vehicle]]
-      .map(x => (x==null?"":String(x))).join(" ").toLowerCase();
-    return hay.includes(q.toLowerCase());
+const byDate = {};
+  VIEW.forEach(r => {
+    const d = r[COL.date];
+    if (!d) return;
+    byDate[d] = (byDate[d] || 0) + toNumber(r[COL.weight]);
   });
+  let topDay = "-";
+  if (Object.keys(byDate).length > 0) {
+    topDay = Object.entries(byDate).sort((a,b)=> b[1]-a[1])[0][0];
+  }
+  document.getElementById("k_topDay").textContent = topDay;
 }
 
-/* KPIs */
-function updateKPIs() {
-  const trips = VIEW.length;
-  const totalW = VIEW.reduce((s,r)=> s + toNumber(r[COL.weight]), 0);
-  const avgW = trips ? Math.round(totalW / trips) : 0;
-  const drivers = new Set(VIEW.map(r => r[COL.driver]).filter(Boolean));
-  document.getElementById("k_trips").textContent  = trips.toLocaleString();
-  document.getElementById("k_weight").textContent = (totalW/1000).toFixed(2).toLocaleString() + " طن";
-  document.getElementById("k_avg").textContent    = (avgW/1000).toFixed(2).toLocaleString() + " طن";
-  document.getElementById("k_drivers").textContent= drivers.size.toLocaleString();
-}
-
-/* جدول */
 function updateTable() {
   const tb = document.getElementById("tbody");
   const empty = document.getElementById("emptyState");
@@ -178,18 +23,17 @@ function updateTable() {
   VIEW.forEach(r => {
     const tr = document.createElement("tr");
     tr.className = "border-b hover:bg-gray-50";
-    tr.innerHTML = `
+    tr.innerHTML = 
       <td class="px-4 py-2">${r[COL.month] || ""}</td>
       <td class="px-4 py-2">${r[COL.date] || ""}</td>
       <td class="px-4 py-2">${r[COL.driver] || ""}</td>
       <td class="px-4 py-2">${(toNumber(r[COL.weight])/1000).toFixed(2)}</td>
       <td class="px-4 py-2">${r[COL.vehicle] || ""}</td>
-    `;
+    ;
     tb.appendChild(tr);
   });
 }
 
-/* أشهر */
 function fillMonthSelect() {
   const sel = document.getElementById("monthSelect");
   const months = Array.from(new Set(ALL.map(r => r[COL.month]).filter(Boolean)));
@@ -200,7 +44,6 @@ function fillMonthSelect() {
   });
 }
 
-/* مركبات */
 function fillVehicleSelect() {
   const sel = document.getElementById("vehicleSelect");
   const vehicles = Array.from(new Set(ALL.map(r => r[COL.vehicle]).filter(Boolean)));
@@ -211,14 +54,12 @@ function fillVehicleSelect() {
   });
 }
 
-/* Render */
 function render() {
   applyFilters();
   updateKPIs();
   updateTable();
 }
 
-/* تحميل البيانات */
 async function loadData() {
   try {
     const result = await new Promise((resolve, reject) => {
@@ -247,7 +88,6 @@ async function loadData() {
   }
 }
 
-/* Events */
 document.getElementById("q").addEventListener("input", render);
 document.getElementById("monthSelect").addEventListener("change", render);
 document.getElementById("vehicleSelect").addEventListener("change", render);
@@ -260,7 +100,6 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   render();
 });
 
-/* Start */
 document.addEventListener("DOMContentLoaded", loadData);
 </script>
 </body>
