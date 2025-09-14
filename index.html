@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>لوحة بيانات النقل</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- PapaParse -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.5.2/papaparse.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-900">
   <!-- Header -->
@@ -80,6 +83,12 @@
       </div>
     </div>
 
+    <!-- Chart -->
+    <div class="bg-white rounded-xl shadow p-6 mb-6">
+      <h3 class="mb-4 font-semibold">وزن النقل حسب المركبة (بالطن)</h3>
+      <canvas id="vehicleWeightChart" height="120"></canvas>
+    </div>
+
     <!-- Table -->
     <div class="bg-white rounded-xl shadow overflow-hidden">
       <div class="p-4 border-b">
@@ -104,7 +113,6 @@
   </main>
 
 <script>
-/* === إعدادات الأعمدة === */
 const COL = {
   month: "الشهر",
   date: "تاريخ التوزين الثاني",
@@ -113,12 +121,12 @@ const COL = {
   vehicle: "رقم المركبة"
 };
 
-/* === رابط الشيت CSV === */
 const CSV_URL =
  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=0&single=true&output=csv";
 
 let ALL = [];
 let VIEW = [];
+let vehicleWeightChart = null;
 
 function toNumber(v) {
   if (v == null) return 0;
@@ -171,7 +179,7 @@ function updateKPIs() {
   document.getElementById("k_avg").textContent    = (avgW/1000).toFixed(2).toLocaleString() + " طن";
   document.getElementById("k_drivers").textContent= drivers.size.toLocaleString();
 
-  // 🔹 إحصائية: أكثر مركبة (وزن)
+  // أكثر مركبة وزن
   const byVehicleWeight = {};
   VIEW.forEach(r => {
     const v = r[COL.vehicle];
@@ -184,7 +192,7 @@ function updateKPIs() {
   }
   document.getElementById("k_topVehicleWeight").textContent = topVehicleWeight;
 
-  // 🔹 إحصائية: أكثر مركبة (رحلات)
+  // أكثر مركبة رحلات
   const byVehicleTrips = {};
   VIEW.forEach(r => {
     const v = r[COL.vehicle];
@@ -197,7 +205,7 @@ function updateKPIs() {
   }
   document.getElementById("k_topVehicleTrips").textContent = topVehicleTrips;
 
-  // 🔹 إحصائية: اليوم الأعلى وزناً
+  // اليوم الأعلى وزناً
   const byDate = {};
   VIEW.forEach(r => {
     const d = r[COL.date];
@@ -209,6 +217,33 @@ function updateKPIs() {
     topDay = Object.entries(byDate).sort((a,b)=> b[1]-a[1])[0][0];
   }
   document.getElementById("k_topDay").textContent = topDay;
+
+  // تحديث الرسم البياني (وزن حسب المركبة)
+  if (vehicleWeightChart) {
+    vehicleWeightChart.destroy();
+  }
+  const labels = Object.keys(byVehicleWeight);
+  const data = Object.values(byVehicleWeight).map(v => (v/1000).toFixed(2));
+  const ctx = document.getElementById("vehicleWeightChart").getContext("2d");
+  vehicleWeightChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "الوزن الكلي (طن)",
+        data: data,
+        backgroundColor: "rgba(59,130,246,0.7)"
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { title: { display: true, text: "المركبة" } },
+        y: { title: { display: true, text: "الوزن (طن)" } }
+      }
+    }
+  });
 }
 
 function updateTable() {
