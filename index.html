@@ -16,6 +16,7 @@
     <div class="container mx-auto">
       <h1 class="text-2xl font-bold">نظام إدارة بيانات النقل</h1>
       <p class="text-blue-100">بلدية مؤتة والمزار</p>
+      <p class="text-blue-200">2025</p>
     </div>
   </header>
 
@@ -83,10 +84,16 @@
       </div>
     </div>
 
-    <!-- Chart -->
+    <!-- Chart: الوزن -->
     <div class="bg-white rounded-xl shadow p-6 mb-6">
       <h3 class="mb-4 font-semibold">وزن النقل حسب المركبة (بالطن)</h3>
       <canvas id="vehicleWeightChart" height="120"></canvas>
+    </div>
+
+    <!-- Chart: الرحلات -->
+    <div class="bg-white rounded-xl shadow p-6 mb-6">
+      <h3 class="mb-4 font-semibold">نسبة عدد الرحلات لكل مركبة</h3>
+      <canvas id="vehicleTripsChart" height="120"></canvas>
     </div>
 
     <!-- Table -->
@@ -127,6 +134,7 @@ const CSV_URL =
 let ALL = [];
 let VIEW = [];
 let vehicleWeightChart = null;
+let vehicleTripsChart = null;
 
 function toNumber(v) {
   if (v == null) return 0;
@@ -218,20 +226,16 @@ function updateKPIs() {
   }
   document.getElementById("k_topDay").textContent = topDay;
 
-  // تحديث الرسم البياني (وزن حسب المركبة)
-  if (vehicleWeightChart) {
-    vehicleWeightChart.destroy();
-  }
-  const labels = Object.keys(byVehicleWeight);
-  const data = Object.values(byVehicleWeight).map(v => (v/1000).toFixed(2));
-  const ctx = document.getElementById("vehicleWeightChart").getContext("2d");
-  vehicleWeightChart = new Chart(ctx, {
+  // 🔹 تحديث Bar Chart (وزن)
+  if (vehicleWeightChart) vehicleWeightChart.destroy();
+  const ctx1 = document.getElementById("vehicleWeightChart").getContext("2d");
+  vehicleWeightChart = new Chart(ctx1, {
     type: 'bar',
     data: {
-      labels: labels,
+      labels: Object.keys(byVehicleWeight),
       datasets: [{
         label: "الوزن الكلي (طن)",
-        data: data,
+        data: Object.values(byVehicleWeight).map(v => (v/1000).toFixed(2)),
         backgroundColor: "rgba(59,130,246,0.7)"
       }]
     },
@@ -242,6 +246,28 @@ function updateKPIs() {
         x: { title: { display: true, text: "المركبة" } },
         y: { title: { display: true, text: "الوزن (طن)" } }
       }
+    }
+  });
+
+  // 🔹 تحديث Pie Chart (رحلات)
+  if (vehicleTripsChart) vehicleTripsChart.destroy();
+  const ctx2 = document.getElementById("vehicleTripsChart").getContext("2d");
+  vehicleTripsChart = new Chart(ctx2, {
+    type: 'pie',
+    data: {
+      labels: Object.keys(byVehicleTrips),
+      datasets: [{
+        label: "عدد الرحلات",
+        data: Object.values(byVehicleTrips),
+        backgroundColor: [
+          "#3b82f6","#10b981","#f59e0b","#ef4444",
+          "#8b5cf6","#06b6d4","#84cc16","#d946ef"
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'right' } }
     }
   });
 }
