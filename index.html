@@ -63,35 +63,16 @@
     </div>
 
     <!-- KPIs -->
-    <div class="grid grid-cols-1 md:grid-cols-7 gap-6 mb-6">
-      <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-gray-500">إجمالي الرحلات</p>
-        <h3 id="k_trips" class="text-2xl font-bold text-blue-600">0</h3>
-      </div>
-      <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-gray-500">إجمالي الوزن</p>
-        <h3 id="k_weight" class="text-2xl font-bold text-green-600">0</h3>
-      </div>
-      <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-gray-500">متوسط حمولة الرحلة</p>
-        <h3 id="k_avg" class="text-2xl font-bold text-purple-600">0</h3>
-      </div>
-      <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-gray-500">عدد السائقين</p>
-        <h3 id="k_drivers" class="text-2xl font-bold text-orange-600">0</h3>
-      </div>
-      <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-gray-500">أكثر مركبة (وزن)</p>
-        <h3 id="k_topVehicleWeight" class="text-xl font-bold text-red-600">-</h3>
-      </div>
-      <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-gray-500">أكثر مركبة (رحلات)</p>
-        <h3 id="k_topVehicleTrips" class="text-xl font-bold text-indigo-600">-</h3>
-      </div>
-      <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-gray-500">اليوم الأعلى وزناً</p>
-        <h3 id="k_topDay" class="text-xl font-bold text-pink-600">-</h3>
-      </div>
+    <div class="grid grid-cols-1 md:grid-cols-9 gap-6 mb-6">
+      <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">إجمالي الرحلات</p><h3 id="k_trips" class="text-2xl font-bold text-blue-600">0</h3></div>
+      <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">إجمالي الوزن</p><h3 id="k_weight" class="text-2xl font-bold text-green-600">0</h3></div>
+      <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">متوسط حمولة الرحلة</p><h3 id="k_avg" class="text-2xl font-bold text-purple-600">0</h3></div>
+      <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">متوسط الوزن اليومي</p><h3 id="k_dailyAvg" class="text-2xl font-bold text-teal-600">0</h3></div>
+      <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">عدد السائقين</p><h3 id="k_drivers" class="text-2xl font-bold text-orange-600">0</h3></div>
+      <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">عدد المركبات</p><h3 id="k_vehicles" class="text-2xl font-bold text-cyan-600">0</h3></div>
+      <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">أكثر مركبة (وزن)</p><h3 id="k_topVehicleWeight" class="text-xl font-bold text-red-600">-</h3></div>
+      <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">أكثر مركبة (رحلات)</p><h3 id="k_topVehicleTrips" class="text-xl font-bold text-indigo-600">-</h3></div>
+      <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">اليوم الأعلى وزناً</p><h3 id="k_topDay" class="text-xl font-bold text-pink-600">-</h3></div>
     </div>
 
     <!-- Chart: الوزن -->
@@ -108,19 +89,10 @@
 
     <!-- Vehicle Summary Table -->
     <div class="bg-white rounded-xl shadow overflow-hidden mt-6">
-      <div class="p-4 border-b">
-        <h3 class="font-semibold">ملخص المركبات</h3>
-      </div>
+      <div class="p-4 border-b"><h3 class="font-semibold">ملخص المركبات</h3></div>
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm text-right">
-          <thead class="bg-gray-100">
-            <tr>
-              <th class="px-4 py-2">رقم المركبة</th>
-              <th class="px-4 py-2">السائقين</th>
-              <th class="px-4 py-2">عدد الرحلات</th>
-              <th class="px-4 py-2">إجمالي الوزن (طن)</th>
-            </tr>
-          </thead>
+          <thead class="bg-gray-100"><tr><th class="px-4 py-2">رقم المركبة</th><th class="px-4 py-2">السائقين</th><th class="px-4 py-2">عدد الرحلات</th><th class="px-4 py-2">إجمالي الوزن (طن)</th></tr></thead>
           <tbody id="vehicleSummary"></tbody>
         </table>
       </div>
@@ -128,20 +100,10 @@
 
     <!-- Table (raw trips) -->
     <div class="bg-white rounded-xl shadow overflow-hidden mt-6">
-      <div class="p-4 border-b">
-        <h3 class="font-semibold">سجل الرحلات</h3>
-      </div>
+      <div class="p-4 border-b"><h3 class="font-semibold">سجل الرحلات</h3></div>
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm text-right">
-          <thead class="bg-gray-100">
-            <tr>
-              <th class="px-4 py-2">الشهر</th>
-              <th class="px-4 py-2">تاريخ التوزين الثاني</th>
-              <th class="px-4 py-2">السائق</th>
-              <th class="px-4 py-2">صافي التحميل (طن)</th>
-              <th class="px-4 py-2">رقم المركبة</th>
-            </tr>
-          </thead>
+          <thead class="bg-gray-100"><tr><th class="px-4 py-2">الشهر</th><th class="px-4 py-2">تاريخ التوزين الثاني</th><th class="px-4 py-2">السائق</th><th class="px-4 py-2">صافي التحميل (طن)</th><th class="px-4 py-2">رقم المركبة</th></tr></thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
@@ -150,32 +112,23 @@
   </main>
 
 <script>
-/* ===== إعدادات الأعمدة ===== */
-const COL = {
-  month: "الشهر",
-  date: "تاريخ التوزين الثاني",
-  driver: "السائق",
-  weight: "صافي التحميل",
-  vehicle: "رقم المركبة"
-};
+/* ======= إعداد الأعمدة ======= */
+const COL = { month:"الشهر", date:"تاريخ التوزين الثاني", driver:"السائق", weight:"صافي التحميل", vehicle:"رقم المركبة" };
 
-/* ===== رابط الشيت CSV ===== */
-const CSV_URL =
- "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=0&single=true&output=csv";
+/* ======= رابط CSV (من Google Sheets منشور على الويب) ======= */
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=0&single=true&output=csv";
 
-/* ===== متغيرات عامة ===== */
+/* ======= متغيرات عامة ======= */
 let ALL = [];
 let VIEW = [];
 let vehicleWeightChart = null;
 let vehicleTripsChart  = null;
 
-/* تسجيل بلجن الداتا ليبلز */
-if (window.ChartDataLabels) {
-  Chart.register(ChartDataLabels);
-}
+/* تسجيل البلجن */
+if (window.ChartDataLabels) { Chart.register(ChartDataLabels); }
 
-/* أدوات مساعدة */
-function toNumber(v) {
+/* ======= أدوات مساعدة ======= */
+function toNumber(v){
   if (v == null) return 0;
   let s = String(v).trim();
   const arabicMap = {'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
@@ -184,13 +137,13 @@ function toNumber(v) {
   const n = parseFloat(s);
   return isNaN(n) ? 0 : n;
 }
-function formatTonFromKg(kg) {
+function formatTonFromKg(kg){
   const t = kg / 1000;
   return t.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-/* ===== فلترة ===== */
-function applyFilters() {
+/* ======= فلترة ======= */
+function applyFilters(){
   const q = document.getElementById("q").value.trim();
   const m = document.getElementById("monthSelect").value;
   const v = document.getElementById("vehicleSelect").value;
@@ -203,11 +156,15 @@ function applyFilters() {
     let byDate = true;
     if (d) {
       if (!r[COL.date]) {
-        byDate = false; // تجاهل السجلات بدون تاريخ عند اختيار تاريخ
+        byDate = false;
       } else {
         const recordDate = new Date(r[COL.date]);
         const exactDate  = new Date(d);
-        byDate = recordDate.toDateString() === exactDate.toDateString();
+        if (isNaN(recordDate)) {
+          byDate = false;
+        } else {
+          byDate = recordDate.toDateString() === exactDate.toDateString();
+        }
       }
     }
 
@@ -215,157 +172,141 @@ function applyFilters() {
 
     if (!q) return true;
     const hay = [r[COL.month], r[COL.date], r[COL.driver], r[COL.weight], r[COL.vehicle]]
-      .map(x => (x==null?"":String(x))).join(" ").toLowerCase();
+      .map(x => (x==null ? "" : String(x))).join(" ").toLowerCase();
     return hay.includes(q.toLowerCase());
   });
 }
 
-/* ===== جدول ملخص المركبات ===== */
-function updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers) {
+/* ======= جدول ملخص المركبات ======= */
+function updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers){
   const sortBy = document.getElementById("sortSelect").value;
-
-  // ضم كل المركبات الموجودة في أي من المجموعتين
   const vehiclesSet = new Set([...Object.keys(byVehicleTrips), ...Object.keys(byVehicleWeight)]);
-  let summary = Array.from(vehiclesSet).map(v => {
-    return {
-      vehicle: v,
-      drivers: Array.from(vehicleDrivers[v] || []),
-      trips: byVehicleTrips[v] || 0,
-      weightTon: (byVehicleWeight[v] || 0) / 1000
-    };
-  });
+  let summary = Array.from(vehiclesSet).map(v => ({
+    vehicle: v,
+    drivers: Array.from(vehicleDrivers[v] || []),
+    trips: byVehicleTrips[v] || 0,
+    weightTon: (byVehicleWeight[v] || 0) / 1000
+  }));
 
-  if (sortBy === "weight") {
-    summary.sort((a,b)=> b.weightTon - a.weightTon);
-  } else if (sortBy === "trips") {
-    summary.sort((a,b)=> b.trips - a.trips);
-  }
+  if (sortBy === "weight") summary.sort((a,b)=> b.weightTon - a.weightTon);
+  else if (sortBy === "trips") summary.sort((a,b)=> b.trips - a.trips);
 
   const tbody = document.getElementById("vehicleSummary");
   tbody.innerHTML = "";
   summary.forEach(row => {
     const tr = document.createElement("tr");
     tr.className = "border-b hover:bg-gray-50";
-    tr.innerHTML = `
-      <td class="px-4 py-2">${row.vehicle}</td>
-      <td class="px-4 py-2">${row.drivers.join(", ")}</td>
-      <td class="px-4 py-2">${row.trips}</td>
-      <td class="px-4 py-2">${row.weightTon.toFixed(2)}</td>
-    `;
+    tr.innerHTML = \`
+      <td class="px-4 py-2">\${row.vehicle}</td>
+      <td class="px-4 py-2">\${row.drivers.join(", ")}</td>
+      <td class="px-4 py-2">\${row.trips}</td>
+      <td class="px-4 py-2">\${row.weightTon.toFixed(2)}</td>
+    \`;
     tbody.appendChild(tr);
   });
 }
 
-/* ===== KPIs + Charts ===== */
-function updateKPIs() {
+/* ======= KPIs + Charts ======= */
+function updateKPIs(){
   const trips = VIEW.length;
   const totalWkg = VIEW.reduce((s,r)=> s + toNumber(r[COL.weight]), 0);
   const avgWkg = trips ? (totalWkg / trips) : 0;
   const drivers = new Set(VIEW.map(r => r[COL.driver]).filter(Boolean));
+  const vehicles = new Set(VIEW.map(r => r[COL.vehicle]).filter(Boolean));
 
   document.getElementById("k_trips").textContent  = trips.toLocaleString();
   document.getElementById("k_weight").textContent = formatTonFromKg(totalWkg) + " طن";
   document.getElementById("k_avg").textContent    = formatTonFromKg(avgWkg) + " طن";
-  document.getElementById("k_drivers").textContent= drivers.size.toLocaleString();
 
-  // تجميع حسب المركبة + حفظ السائقين
+  const uniqueDays = new Set(VIEW.map(r => r[COL.date]).filter(d => d));
+  const daysCount = uniqueDays.size;
+  const dailyAvgTon = daysCount ? (totalWkg/1000 / daysCount) : 0;
+  document.getElementById("k_dailyAvg").textContent = dailyAvgTon.toFixed(2) + " طن";
+
+  document.getElementById("k_drivers").textContent  = drivers.size.toLocaleString();
+  document.getElementById("k_vehicles").textContent = vehicles.size.toLocaleString();
+
+  // تجميع حسب المركبة + السائقين
   const byVehicleWeight = {};
   const byVehicleTrips  = {};
   const vehicleDrivers  = {};
   VIEW.forEach(r => {
     const v = r[COL.vehicle] || "مجهولة";
-    const d = r[COL.driver] || "بدون سائق";
+    const d = r[COL.driver]  || "بدون سائق";
     byVehicleWeight[v] = (byVehicleWeight[v] || 0) + toNumber(r[COL.weight]);
     byVehicleTrips[v]  = (byVehicleTrips[v]  || 0) + 1;
     if (!vehicleDrivers[v]) vehicleDrivers[v] = new Set();
     vehicleDrivers[v].add(d);
   });
 
-  // تحديث جدول الملخص
+  // جدول الملخص
   updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers);
 
   // كروت "الأكثر"
-  let topVehicleWeight = "-";
-  if (Object.keys(byVehicleWeight).length > 0) {
-    topVehicleWeight = Object.entries(byVehicleWeight).sort((a,b)=> b[1]-a[1])[0][0];
-  }
-  document.getElementById("k_topVehicleWeight").textContent = topVehicleWeight;
-
-  let topVehicleTrips = "-";
-  if (Object.keys(byVehicleTrips).length > 0) {
-    topVehicleTrips = Object.entries(byVehicleTrips).sort((a,b)=> b[1]-a[1])[0][0];
-  }
-  document.getElementById("k_topVehicleTrips").textContent = topVehicleTrips;
+  document.getElementById("k_topVehicleWeight").textContent =
+    Object.keys(byVehicleWeight).length ? Object.entries(byVehicleWeight).sort((a,b)=> b[1]-a[1])[0][0] : "-";
+  document.getElementById("k_topVehicleTrips").textContent  =
+    Object.keys(byVehicleTrips ).length ? Object.entries(byVehicleTrips ).sort((a,b)=> b[1]-a[1])[0][0] : "-";
 
   // اليوم الأعلى وزناً
   const byDate = {};
-  VIEW.forEach(r => {
-    const d = r[COL.date];
-    if (!d) return;
-    byDate[d] = (byDate[d] || 0) + toNumber(r[COL.weight]);
-  });
-  let topDay = "-";
-  if (Object.keys(byDate).length > 0) {
-    topDay = Object.entries(byDate).sort((a,b)=> b[1]-a[1])[0][0];
-  }
-  document.getElementById("k_topDay").textContent = topDay;
+  VIEW.forEach(r => { if (r[COL.date]) byDate[r[COL.date]] = (byDate[r[COL.date]] || 0) + toNumber(r[COL.weight]); });
+  document.getElementById("k_topDay").textContent =
+    Object.keys(byDate).length ? Object.entries(byDate).sort((a,b)=> b[1]-a[1])[0][0] : "-";
 
-  // ترتيب للمخططات حسب الاختيار
+  // إعداد بيانات الرسوم
   const sortBy = document.getElementById("sortSelect").value;
   let weightEntries = Object.entries(byVehicleWeight);
   let tripEntries   = Object.entries(byVehicleTrips);
 
-  if (sortBy === "weight") {
-    weightEntries.sort((a,b)=> b[1]-a[1]);
-    tripEntries.sort((a,b)=> b[1]-a[1]);
-  } else if (sortBy === "trips") {
-    tripEntries.sort((a,b)=> b[1]-a[1]);
-    weightEntries.sort((a,b)=> b[1]-a[1]);
-  }
+  if (sortBy === "weight") weightEntries.sort((a,b)=> b[1]-a[1]);
+  else if (sortBy === "trips") tripEntries.sort((a,b)=> b[1]-a[1]);
 
   const labelsWeight = weightEntries.map(e=>e[0]);
   const dataWeightTon = weightEntries.map(e=> (e[1]/1000).toFixed(2));
 
   const labelsTrips = tripEntries.map(e=>{
     const v = e[0];
-    const drivers = Array.from(vehicleDrivers[v]||[]).join(", ");
-    return v + " – " + drivers;
+    const driversList = Array.from(vehicleDrivers[v]||[]).join(", ");
+    return v + " – " + driversList;
   });
   const dataTrips = tripEntries.map(e=> e[1]);
 
-  // إظهار/إخفاء الشارتات (لو مركبة واحدة فقط)
-  document.getElementById("chartWeightBox").style.display = labelsWeight.length > 1 ? "block" : "none";
-  document.getElementById("chartTripsBox").style.display  = labelsTrips.length  > 1 ? "block" : "none";
+  // إظهار/إخفاء الشارتات حسب اختيار مركبة أو خيار الفرز
+  const selectedVehicle = document.getElementById("vehicleSelect").value;
+  if (selectedVehicle) {
+    document.getElementById("chartWeightBox").style.display = "none";
+    document.getElementById("chartTripsBox").style.display  = "none";
+  } else {
+    if (sortBy === "weight") {
+      document.getElementById("chartWeightBox").style.display = labelsWeight.length > 1 ? "block" : "none";
+      document.getElementById("chartTripsBox").style.display  = "none";
+    } else if (sortBy === "trips") {
+      document.getElementById("chartWeightBox").style.display = "none";
+      document.getElementById("chartTripsBox").style.display  = labelsTrips.length > 1 ? "block" : "none";
+    } else {
+      document.getElementById("chartWeightBox").style.display = labelsWeight.length > 1 ? "block" : "none";
+      document.getElementById("chartTripsBox").style.display  = labelsTrips.length  > 1 ? "block" : "none";
+    }
+  }
 
-  // Bar: وزن
-  if (labelsWeight.length > 1) {
+  // رسم Bar: الوزن
+  if (labelsWeight.length > 1 && !selectedVehicle) {
     if (vehicleWeightChart) vehicleWeightChart.destroy();
     const ctx1 = document.getElementById("vehicleWeightChart").getContext("2d");
     vehicleWeightChart = new Chart(ctx1, {
       type: 'bar',
-      data: {
-        labels: labelsWeight,
-        datasets: [{
-          label: "الوزن الكلي (طن)",
-          data: dataWeightTon,
-          backgroundColor: "rgba(59,130,246,0.7)"
-        }]
-      },
+      data: { labels: labelsWeight, datasets: [{ label: "الوزن الكلي (طن)", data: dataWeightTon, backgroundColor: "rgba(59,130,246,0.7)" }] },
       options: {
         responsive: true,
-        plugins: { legend: { display: false }, tooltip: { callbacks: {
-          label: (ctx)=> ` ${ctx.parsed.y} طن`
-        }}},
-        scales: {
-          x: { title: { display: true, text: "المركبة" } },
-          y: { title: { display: true, text: "الوزن (طن)" } }
-        }
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx)=> ` ${ctx.parsed.y} طن` }}},
+        scales: { x: { title: { display: true, text: "المركبة" } }, y: { title: { display: true, text: "الوزن (طن)" } } }
       }
     });
   }
 
-  // Pie: رحلات + نسب مئوية + ملصق المركبة – السائقين
-  if (labelsTrips.length > 1) {
+  // رسم Pie: الرحلات
+  if (labelsTrips.length > 1 && !selectedVehicle) {
     if (vehicleTripsChart) vehicleTripsChart.destroy();
     const ctx2 = document.getElementById("vehicleTripsChart").getContext("2d");
     vehicleTripsChart = new Chart(ctx2, {
@@ -373,13 +314,8 @@ function updateKPIs() {
       data: {
         labels: labelsTrips,
         datasets: [{
-          label: "عدد الرحلات",
           data: dataTrips,
-          backgroundColor: [
-            "#3b82f6","#10b981","#f59e0b","#ef4444",
-            "#8b5cf6","#06b6d4","#84cc16","#d946ef",
-            "#fb7185","#22c55e","#a78bfa"
-          ]
+          backgroundColor: ["#3b82f6","#10b981","#f59e0b","#ef4444","#8b5cf6","#06b6d4","#84cc16","#d946ef","#f97316","#0ea5e9","#f43f5e"]
         }]
       },
       options: {
@@ -397,7 +333,7 @@ function updateKPIs() {
           datalabels: {
             color: '#fff',
             formatter: (value, ctx) => {
-              const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+              const sum = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
               const percentage = sum ? (value * 100 / sum).toFixed(1) + "%" : "0%";
               return percentage;
             }
@@ -408,75 +344,51 @@ function updateKPIs() {
   }
 }
 
-/* ===== جدول الرحلات ===== */
-function updateTable() {
+/* ======= جدول الرحلات ======= */
+function updateTable(){
   const tb = document.getElementById("tbody");
   const empty = document.getElementById("emptyState");
   tb.innerHTML = "";
-  if (VIEW.length === 0) {
-    empty.classList.remove("hidden");
-    return;
-  }
+  if (VIEW.length === 0) { empty.classList.remove("hidden"); return; }
   empty.classList.add("hidden");
   VIEW.forEach(r => {
     const tr = document.createElement("tr");
     tr.className = "border-b hover:bg-gray-50";
-    tr.innerHTML = `
-      <td class="px-4 py-2">${r[COL.month] || ""}</td>
-      <td class="px-4 py-2">${r[COL.date] || ""}</td>
-      <td class="px-4 py-2">${r[COL.driver] || ""}</td>
-      <td class="px-4 py-2">${formatTonFromKg(toNumber(r[COL.weight]))}</td>
-      <td class="px-4 py-2">${r[COL.vehicle] || ""}</td>
-    `;
+    tr.innerHTML = \`
+      <td class="px-4 py-2">\${r[COL.month] || ""}</td>
+      <td class="px-4 py-2">\${r[COL.date] || ""}</td>
+      <td class="px-4 py-2">\${r[COL.driver] || ""}</td>
+      <td class="px-4 py-2">\${formatTonFromKg(toNumber(r[COL.weight]))}</td>
+      <td class="px-4 py-2">\${r[COL.vehicle] || ""}</td>
+    \`;
     tb.appendChild(tr);
   });
 }
 
-/* ===== تعبئة القوائم ===== */
-function fillMonthSelect() {
+/* ======= تعبئة القوائم ======= */
+function fillMonthSelect(){
   const sel = document.getElementById("monthSelect");
   const months = Array.from(new Set(ALL.map(r => r[COL.month]).filter(Boolean)));
-  months.forEach(m => {
-    const opt = document.createElement("option");
-    opt.value = opt.textContent = m;
-    sel.appendChild(opt);
-  });
+  months.forEach(m => { const opt = document.createElement("option"); opt.value = opt.textContent = m; sel.appendChild(opt); });
 }
-function fillVehicleSelect() {
+function fillVehicleSelect(){
   const sel = document.getElementById("vehicleSelect");
   const vehicles = Array.from(new Set(ALL.map(r => r[COL.vehicle]).filter(Boolean)));
-  vehicles.forEach(v => {
-    const opt = document.createElement("option");
-    opt.value = opt.textContent = v;
-    sel.appendChild(opt);
-  });
+  vehicles.forEach(v => { const opt = document.createElement("option"); opt.value = opt.textContent = v; sel.appendChild(opt); });
 }
 
-/* ===== Render ===== */
-function render() {
-  applyFilters();
-  updateKPIs();
-  updateTable();
-}
+/* ======= Render ======= */
+function render(){ applyFilters(); updateKPIs(); updateTable(); }
 
-/* ===== تحميل البيانات ===== */
-async function loadData() {
+/* ======= تحميل البيانات ======= */
+async function loadData(){
   try {
     const result = await new Promise((resolve, reject) => {
-      Papa.parse(CSV_URL, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: resolve,
-        error: reject
-      });
+      Papa.parse(CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: resolve, error: reject });
     });
     ALL = result.data.map(row => {
       const obj = {};
-      Object.keys(row).forEach(k => {
-        const kk = (k || "").trim();
-        obj[kk] = (row[k] == null ? "" : String(row[k]).trim());
-      });
+      Object.keys(row).forEach(k => { const kk = (k || "").trim(); obj[kk] = (row[k] == null ? "" : String(row[k]).trim()); });
       return obj;
     });
     fillMonthSelect();
@@ -488,7 +400,7 @@ async function loadData() {
   }
 }
 
-/* ===== Events ===== */
+/* ======= Events ======= */
 document.getElementById("q").addEventListener("input", render);
 document.getElementById("monthSelect").addEventListener("change", render);
 document.getElementById("vehicleSelect").addEventListener("change", render);
@@ -503,7 +415,7 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   render();
 });
 
-/* ===== Start ===== */
+/* ======= Start ======= */
 document.addEventListener("DOMContentLoaded", loadData);
 </script>
 </body>
