@@ -9,6 +9,8 @@
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.5.2/papaparse.min.js"></script>
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- DataLabels Plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 </head>
 <body class="bg-gray-50 text-gray-900">
   <!-- Header -->
@@ -85,13 +87,13 @@
     </div>
 
     <!-- Chart: الوزن -->
-    <div class="bg-white rounded-xl shadow p-6 mb-6">
+    <div id="chartWeightBox" class="bg-white rounded-xl shadow p-6 mb-6">
       <h3 class="mb-4 font-semibold">وزن النقل حسب المركبة (بالطن)</h3>
       <canvas id="vehicleWeightChart" height="120"></canvas>
     </div>
 
     <!-- Chart: الرحلات -->
-    <div class="bg-white rounded-xl shadow p-6 mb-6">
+    <div id="chartTripsBox" class="bg-white rounded-xl shadow p-6 mb-6">
       <h3 class="mb-4 font-semibold">نسبة عدد الرحلات لكل مركبة</h3>
       <canvas id="vehicleTripsChart" height="120"></canvas>
     </div>
@@ -187,89 +189,118 @@ function updateKPIs() {
   document.getElementById("k_avg").textContent    = (avgW/1000).toFixed(2).toLocaleString() + " طن";
   document.getElementById("k_drivers").textContent= drivers.size.toLocaleString();
 
-  // أكثر مركبة وزن
+  // 🔹 أكثر مركبة وزن
   const byVehicleWeight = {};
   VIEW.forEach(r => {
     const v = r[COL.vehicle];
     if (!v) return;
     byVehicleWeight[v] = (byVehicleWeight[v] || 0) + toNumber(r[COL.weight]);
   });
+
   let topVehicleWeight = "-";
   if (Object.keys(byVehicleWeight).length > 0) {
     topVehicleWeight = Object.entries(byVehicleWeight).sort((a,b)=> b[1]-a[1])[0][0];
   }
   document.getElementById("k_topVehicleWeight").textContent = topVehicleWeight;
 
-  // أكثر مركبة رحلات
+  // 🔹 أكثر مركبة رحلات
   const byVehicleTrips = {};
   VIEW.forEach(r => {
     const v = r[COL.vehicle];
     if (!v) return;
     byVehicleTrips[v] = (byVehicleTrips[v] || 0) + 1;
   });
+
   let topVehicleTrips = "-";
   if (Object.keys(byVehicleTrips).length > 0) {
     topVehicleTrips = Object.entries(byVehicleTrips).sort((a,b)=> b[1]-a[1])[0][0];
   }
   document.getElementById("k_topVehicleTrips").textContent = topVehicleTrips;
 
-  // اليوم الأعلى وزناً
+  // 🔹 اليوم الأعلى وزناً
   const byDate = {};
   VIEW.forEach(r => {
     const d = r[COL.date];
     if (!d) return;
     byDate[d] = (byDate[d] || 0) + toNumber(r[COL.weight]);
   });
+
   let topDay = "-";
   if (Object.keys(byDate).length > 0) {
     topDay = Object.entries(byDate).sort((a,b)=> b[1]-a[1])[0][0];
   }
   document.getElementById("k_topDay").textContent = topDay;
 
-  // 🔹 تحديث Bar Chart (وزن)
-  if (vehicleWeightChart) vehicleWeightChart.destroy();
-  const ctx1 = document.getElementById("vehicleWeightChart").getContext("2d");
-  vehicleWeightChart = new Chart(ctx1, {
-    type: 'bar',
-    data: {
-      labels: Object.keys(byVehicleWeight),
-      datasets: [{
-        label: "الوزن الكلي (طن)",
-        data: Object.values(byVehicleWeight).map(v => (v/1000).toFixed(2)),
-        backgroundColor: "rgba(59,130,246,0.7)"
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { title: { display: true, text: "المركبة" } },
-        y: { title: { display: true, text: "الوزن (طن)" } }
-      }
-    }
-  });
+  // 🔹 بيانات الشارتات
+  const labelsWeight = Object.keys(byVehicleWeight);
+  const dataWeight = Object.values(byVehicleWeight).map(v => (v/1000).toFixed(2));
 
-  // 🔹 تحديث Pie Chart (رحلات)
-  if (vehicleTripsChart) vehicleTripsChart.destroy();
-  const ctx2 = document.getElementById("vehicleTripsChart").getContext("2d");
-  vehicleTripsChart = new Chart(ctx2, {
-    type: 'pie',
-    data: {
-      labels: Object.keys(byVehicleTrips),
-      datasets: [{
-        label: "عدد الرحلات",
-        data: Object.values(byVehicleTrips),
-        backgroundColor: [
-          "#3b82f6","#10b981","#f59e0b","#ef4444",
-          "#8b5cf6","#06b6d4","#84cc16","#d946ef"
-        ]
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { position: 'right' } }
-    }
-  });
+  const labelsTrips = Object.keys(byVehicleTrips);
+  const dataTrips = Object.values(byVehicleTrips);
+
+  // إظهار/إخفاء الشارتات
+  document.getElementById("chartWeightBox").style.display = labelsWeight.length > 1 ? "block" : "none";
+  document.getElementById("chartTripsBox").style.display = labelsTrips.length > 1 ? "block" : "none";
+
+  // 🔹 Bar Chart (وزن)
+  if (labelsWeight.length > 1) {
+    if (vehicleWeightChart) vehicleWeightChart.destroy();
+    const ctx1 = document.getElementById("vehicleWeightChart").getContext("2d");
+    vehicleWeightChart = new Chart(ctx1, {
+      type: 'bar',
+      data: {
+        labels: labelsWeight,
+        datasets: [{
+          label: "الوزن الكلي (طن)",
+          data: dataWeight,
+          backgroundColor: "rgba(59,130,246,0.7)"
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { title: { display: true, text: "المركبة" } },
+          y: { title: { display: true, text: "الوزن (طن)" } }
+        }
+      }
+    });
+  }
+
+  // 🔹 Pie Chart (رحلات مع نسب مئوية)
+  if (labelsTrips.length > 1) {
+    if (vehicleTripsChart) vehicleTripsChart.destroy();
+    const ctx2 = document.getElementById("vehicleTripsChart").getContext("2d");
+    vehicleTripsChart = new Chart(ctx2, {
+      type: 'pie',
+      data: {
+        labels: labelsTrips,
+        datasets: [{
+          label: "عدد الرحلات",
+          data: dataTrips,
+          backgroundColor: [
+            "#3b82f6","#10b981","#f59e0b","#ef4444",
+            "#8b5cf6","#06b6d4","#84cc16","#d946ef"
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'right' },
+          datalabels: {
+            color: '#fff',
+            formatter: (value, ctx) => {
+              let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+              let percentage = (value * 100 / sum).toFixed(1) + "%";
+              return percentage;
+            }
+          }
+        }
+      },
+      plugins: [ChartDataLabels]
+    });
+  }
 }
 
 function updateTable() {
