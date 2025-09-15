@@ -602,18 +602,14 @@ function computeTimeSeries(agg, metric) {
   VIEW.forEach(r => {
     let key = null;
     if (agg === 'day') {
-      if (!r[COL.date]) return; // تجاهل بلا تاريخ
-      const dt = new Date(r[COL.date]);
-      if (isNaN(dt)) return;
-      key = toYMD(dt);
-    } else {
-      // شهري: الأفضل من التاريخ، وإن لم يوجد فاستعمل حقل الشهر
-      if (r[COL.date]) {
-        const dt = new Date(r[COL.date]);
-        if (!isNaN(dt)) key = toYM(dt);
-      }
-      if (!key && r[COL.month]) key = String(r[COL.month]).trim();
-      if (!key) return;
+  if (!r[COL.date]) return; 
+  const dt = new Date(r[COL.date]);
+  if (isNaN(dt)) return;
+  key = toYMD(dt);   // YYYY-MM-DD
+} else if (agg === 'month') {
+  if (!r[COL.month]) return;
+  key = String(r[COL.month]).trim();   // ناخذ الشهر مباشرة من العمود
+}
     }
 
     if (!(key in map)) map[key] = 0;
