@@ -16,6 +16,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
 </head>
 <body class="bg-gray-50 text-gray-900">
   <!-- Header -->
@@ -28,27 +29,197 @@
   </header>
 
   <main class="container mx-auto px-4 py-6">
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow p-4 mb-6 grid grid-cols-1 md:grid-cols-6 gap-4">
+      <div>
+        <label class="block text-sm mb-1">بحث عام</label>
+        <input id="q" type="text" placeholder="ابحث بتاريخ أو سائق أو رقم مركبة..."
+               class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
+      </div>
+      <div>
+        <label class="block text-sm mb-1">الشهر</label>
+        <select id="monthSelect" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
+          <option value="">الكل</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm mb-1">رقم المركبة</label>
+        <select id="vehicleSelect" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
+          <option value="">الكل</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm mb-1">التاريخ</label>
+        <input id="dateExact" type="date"
+               class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
+      </div>
+      <div class="flex items-end">
+        <button id="resetBtn" class="w-full md:w-auto bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">
+          إعادة تعيين الفلاتر
+        </button>
+      </div>
+    </div>
 
-    <!-- باقي المحتوى (KPIs, Charts, Tables) ... -->
+    <!-- KPIs -->
+    <div class="grid grid-cols-1 md:grid-cols-9 gap-6 mb-6">
+      <div class="bg-white rounded-xl shadow p-6">
+        <p class="text-gray-500">إجمالي الرحلات</p>
+        <h3 id="k_trips" class="text-2xl font-bold text-blue-600">0</h3>
+      </div>
+      <div class="bg-white rounded-xl shadow p-6">
+        <p class="text-gray-500">إجمالي الوزن</p>
+        <h3 id="k_weight" class="text-2xl font-bold text-green-600">0</h3>
+      </div>
+      <div class="bg-white rounded-xl shadow p-6">
+        <p class="text-gray-500">متوسط حمولة الرحلة</p>
+        <h3 id="k_avg" class="text-2xl font-bold text-purple-600">0</h3>
+      </div>
+      <div class="bg-white rounded-xl shadow p-6">
+        <p class="text-gray-500">عدد السائقين</p>
+        <h3 id="k_drivers" class="text-2xl font-bold text-orange-600">0</h3>
+      </div>
+      <div class="bg-white rounded-xl shadow p-6">
+        <p class="text-gray-500">أكثر مركبة (وزن)</p>
+        <h3 id="k_topVehicleWeight" class="text-xl font-bold text-red-600">-</h3>
+      </div>
+      <div class="bg-white rounded-xl shadow p-6">
+        <p class="text-gray-500">أكثر مركبة (رحلات)</p>
+        <h3 id="k_topVehicleTrips" class="text-xl font-bold text-indigo-600">-</h3>
+      </div>
+      <div class="bg-white rounded-xl shadow p-6">
+        <p class="text-gray-500">اليوم الأعلى وزناً</p>
+        <h3 id="k_topDay" class="text-xl font-bold text-pink-600">-</h3>
+      </div>
+          <div class="bg-white rounded-xl shadow p-6">
+        <p class="text-gray-500">متوسط يومي</p>
+        <div class="mt-1 space-y-1 text-sm">
+          <div>الوزن: <span id="k_avgDailyWeight" class="font-bold text-blue-600">0</span> طن/يوم</div>
+          <div>الرحلات: <span id="k_avgDailyTrips" class="font-bold text-blue-600">0</span> رحلة/يوم</div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-6">
+        <p class="text-gray-500">متوسط شهري</p>
+        <div class="mt-1 space-y-1 text-sm">
+          <div>الوزن: <span id="k_avgMonthlyWeight" class="font-bold text-blue-600">0</span> طن/شهر</div>
+          <div>الرحلات: <span id="k_avgMonthlyTrips" class="font-bold text-blue-600">0</span> رحلة/شهر</div>
+        </div>
+      </div>
+    </div>
 
+    <!-- NEW: Time Series -->
+    <div id="timeSeriesBox" class="bg-white rounded-xl shadow p-6 mb-6">
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        <h3 class="font-semibold">السلاسل الزمنية</h3>
+        <select id="tsAgg" class="border rounded-lg px-3 py-2">
+          <option value="day">تجميع يومي</option>
+          <option value="month">تجميع شهري</option>
+        </select>
+        <select id="tsMetric" class="border rounded-lg px-3 py-2">
+          <option value="weight">الوزن (طن)</option>
+          <option value="trips">الرحلات</option>
+        </select>
+      </div>
+      <canvas id="timeSeriesChart" height="120"></canvas>
+      <p class="text-xs text-gray-500 mt-2">* قد تُستثنى السجلات بلا تاريخ من الرسم اليومي.</p>
+    </div>
+
+    <!-- Chart: الوزن -->
+    <div id="chartWeightBox" class="bg-white rounded-xl shadow p-6 mb-6">
+      <h3 class="mb-2 font-semibold">وزن النقل حسب المركبة (بالطن)</h3>
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        <label class="text-sm">بحث عن مركبة:</label>
+        <input id="vwSearch" type="text" placeholder="رقم المركبة" class="border rounded-lg px-3 py-1">
+        <label class="text-sm">Top N:</label>
+        <input id="vwTopN" type="number" min="1" value="10" class="w-24 border rounded-lg px-3 py-1">
+      </div>
+
+      <canvas id="vehicleWeightChart" height="120"></canvas>
+    </div>
+
+    <!-- Chart: الرحلات -->
+    <div id="chartTripsBox" class="bg-white rounded-xl shadow p-6 mb-6">
+      <h3 class="mb-2 font-semibold">نسبة عدد الرحلات لكل مركبة</h3>
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        <label class="text-sm">بحث عن مركبة:</label>
+        <input id="vtSearch" type="text" placeholder="رقم المركبة" class="border rounded-lg px-3 py-1">
+        <label class="text-sm">Top N:</label>
+        <input id="vtTopN" type="number" min="1" value="10" class="w-24 border rounded-lg px-3 py-1">
+      </div>
+
+      <canvas id="vehicleTripsChart" height="120"></canvas>
+    </div>
+
+    <!-- NEW: Driver Performance -->
+    <div id="chartDriversBox" class="bg-white rounded-xl shadow p-6 mb-6">
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        <h3 class="font-semibold">أداء السائقين</h3>
+        <label class="text-sm">الترتيب</label>
+        <select id="driverSort" class="border rounded-lg px-3 py-2">
+          <option value="weight">حسب الوزن</option>
+          <option value="trips">حسب الرحلات</option>
+        </select>
+        <label class="text-sm">عدد السائقين (Top N)</label>
+        <input id="driverTopN" type="number" min="1" value="10" class="w-24 border rounded-lg px-3 py-2">
+      </div>
+      <canvas id="driverChart" height="120"></canvas>
+    </div>
+
+    <!-- Vehicle Summary Table -->
+    <div class="flex flex-wrap gap-2 mb-4">
+  <button id="btnCSV" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">تصدير CSV (الرحلات الحالية)</button>
+  <button id="btnXLSX" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">تصدير Excel (رحلات + ملخص مركبات)</button>
+  <button id="btnPDF" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">PDF (سجل الرحلات)</button>
+</div>
+<div id="vehicleSummaryBox" class="bg-white rounded-xl shadow overflow-hidden mt-6">
+      <div class="p-4 border-b">
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        <label class="text-sm">بحث:</label>
+        <input id="vsSearch" type="text" placeholder="ابحث..." class="border rounded-lg px-3 py-1">
+        <label class="text-sm">ترتيب:</label>
+        <select id="vsSort" class="border rounded-lg px-3 py-1">
+          <option value="weight">حسب الوزن</option>
+          <option value="trips">حسب الرحلات</option>
+        </select>
+      </div>
+
+        <h3 class="font-semibold">ملخص المركبات</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm text-right">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="px-4 py-2">رقم المركبة</th>
+              <th class="px-4 py-2">السائقين</th>
+              <th class="px-4 py-2">عدد الرحلات</th>
+              <th class="px-4 py-2">إجمالي الوزن (طن)</th>
+            </tr>
+          </thead>
+          <tbody id="vehicleSummary"></tbody>
+        </table>
+      </div>
+    </div>
+
+    
     <!-- Vehicle Efficiency Analysis -->
     <div id="vehAnalysisBox" class="bg-white rounded-xl shadow overflow-hidden mt-6">
       <div class="p-4 border-b">
-        <div class="flex flex-wrap items-center gap-3 mb-4">
-          <label class="text-sm">بحث:</label>
-          <input id="vaSearch" type="text" placeholder="ابحث..." class="border rounded-lg px-3 py-1">
-          <label class="text-sm">من سنة تصنيع:</label>
-          <input id="vaYear" type="number" placeholder="2000" class="w-24 border rounded-lg px-3 py-1">
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        <label class="text-sm">بحث:</label>
+        <input id="vaSearch" type="text" placeholder="ابحث..." class="border rounded-lg px-3 py-1">
+        <label class="text-sm">من سنة تصنيع:</label>
+        
+        
+        <label class="text-sm">ترتيب حسب:</label>
+        <select id="vaSort" class="border rounded-lg px-3 py-1">
+          <option value="">بدون ترتيب</option>
+          <option value="eff">نسبة الاستغلال (تنازلي)</option>
+          <option value="year">سنة التصنيع (تنازلي)</option>
+          <option value="capTon">السعة النظرية (تنازلي)</option>
+        </select>
 
-          <!-- ✅ فلتر الترتيب الجديد -->
-          <label class="text-sm">ترتيب حسب:</label>
-          <select id="vaSort" class="border rounded-lg px-3 py-1">
-            <option value="">بدون ترتيب</option>
-            <option value="eff">نسبة الاستغلال (تنازلي)</option>
-            <option value="year">سنة التصنيع (تنازلي)</option>
-            <option value="capTon">السعة النظرية (تنازلي)</option>
-          </select>
-        </div>
+        
+      </div>
+
         <h3 class="font-semibold">تحليل كفاءة المركبات</h3>
       </div>
       <div class="overflow-x-auto">
@@ -69,8 +240,33 @@
       </div>
     </div>
 
-    <!-- باقي الجداول (سجل الرحلات وغيره) ... -->
 
+    <!-- Table (raw trips) -->
+    <div class="flex flex-wrap gap-2 mb-4">
+  <button id="btnCSV" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">تصدير CSV (الرحلات الحالية)</button>
+  <button id="btnXLSX" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">تصدير Excel (رحلات + ملخص مركبات)</button>
+  <button id="btnPDF" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">PDF (سجل الرحلات)</button>
+</div>
+<div id="vehicleSummaryBox" class="bg-white rounded-xl shadow overflow-hidden mt-6">
+      <div class="p-4 border-b">
+        <h3 class="font-semibold">سجل الرحلات</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm text-right">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="px-4 py-2">الشهر</th>
+              <th class="px-4 py-2">تاريخ التوزين الثاني</th>
+              <th class="px-4 py-2">السائق</th>
+              <th class="px-4 py-2">صافي التحميل (طن)</th>
+              <th class="px-4 py-2">رقم المركبة</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div id="emptyState" class="p-6 text-center text-gray-500 hidden">لا توجد بيانات مطابقة.</div>
+    </div>
   </main>
 
 <script>
@@ -83,17 +279,21 @@ const COL = {
   vehicle: "رقم المركبة"
 };
 
-/* ===== روابط CSV ===== */
+/* ===== رابط الشيت CSV ===== */
 const CSV_URL =
  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=0&single=true&output=csv";
-const VEH_URL =
- "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=2001178330&single=true&output=csv";
 
+/* ===== متغيرات عامة ===== */
 let ALL = [];
 let VIEW = [];
+let vehicleWeightChart = null;
+let vehicleTripsChart  = null;
+let timeSeriesChart    = null;
+
+/* ===== رابط شيت المركبات ===== */
+const VEH_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=2001178330&single=true&output=csv";
 let VEHICLES=[];
 
-/* ===== تحليل كفاءة المركبات ===== */
 function renderVehAnalysis(){
   const tb=document.getElementById("vehAnalysisTable");
   if(!tb) return;
@@ -131,7 +331,6 @@ function renderVehAnalysis(){
     rows.push({vnum,year,capM3,capTon,trips,wton,eff});
   });
 
-  // ✅ الترتيب
   if(vaSort==="eff"){
     rows.sort((a,b)=>b.eff-a.eff);
   }else if(vaSort==="year"){
@@ -166,7 +365,166 @@ async function loadVehSheet(){
   }catch(e){console.error("خطأ تحميل شيت المركبات:",e);}
 }
 
-/* ===== أدوات مساعدة ===== */
+
+/* ===== Export Helpers ===== */
+function exportCSV() {
+  // تحضير بيانات VIEW إلى CSV
+  const headers = ['الشهر','تاريخ التوزين الثاني','السائق','صافي التحميل (طن)','رقم المركبة'];
+  const rows = VIEW.map(r => [
+    r[COL.month] || '',
+    r[COL.date] || '',
+    r[COL.driver] || '',
+    (toNumber(r[COL.weight])/1000).toFixed(2),
+    r[COL.vehicle] || ''
+  ]);
+  const csv = [headers.join(','), ...rows.map(a=>a.join(','))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'trips.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function buildVehicleSummaryArray() {
+  // إعادة بناء نفس بيانات ملخص المركبات الحالية
+  const byVehicleWeight = {};
+  const byVehicleTrips  = {};
+  const vehicleDrivers  = {};
+  VIEW.forEach(r => {
+    const v = r[COL.vehicle] || 'مجهولة';
+    const d = r[COL.driver] || 'بدون سائق';
+    byVehicleWeight[v] = (byVehicleWeight[v] || 0) + toNumber(r[COL.weight]);
+    byVehicleTrips[v]  = (byVehicleTrips[v]  || 0) + 1;
+    if (!vehicleDrivers[v]) vehicleDrivers[v] = new Set();
+    vehicleDrivers[v].add(d);
+  });
+  const vehiclesSet = new Set([...Object.keys(byVehicleTrips), ...Object.keys(byVehicleWeight)]);
+  const summary = Array.from(vehiclesSet).map(v => ({
+    'رقم المركبة': v,
+    'السائقين': Array.from(vehicleDrivers[v] || []).join(', '),
+    'عدد الرحلات': byVehicleTrips[v] || 0,
+    'إجمالي الوزن (طن)': ((byVehicleWeight[v] || 0)/1000).toFixed(2)
+  }));
+  return summary;
+}
+
+function exportXLSX() {
+  const trips = VIEW.map(r => ({
+    'الشهر': r[COL.month] || '',
+    'تاريخ التوزين الثاني': r[COL.date] || '',
+    'السائق': r[COL.driver] || '',
+    'صافي التحميل (طن)': (toNumber(r[COL.weight])/1000).toFixed(2),
+    'رقم المركبة': r[COL.vehicle] || ''
+  }));
+  const wb = XLSX.utils.book_new();
+  const ws1 = XLSX.utils.json_to_sheet(trips);
+  XLSX.utils.book_append_sheet(wb, ws1, 'سجل الرحلات');
+  const ws2 = XLSX.utils.json_to_sheet(buildVehicleSummaryArray());
+  XLSX.utils.book_append_sheet(wb, ws2, 'ملخص المركبات');
+  XLSX.writeFile(wb, 'transport_dashboard.xlsx');
+}
+
+async function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('l', 'pt', 'a4'); // landscape
+
+  const node = document.getElementById('rawTripsBox');
+  const canvas = await html2canvas(node, {scale: 2});
+  const imgData = canvas.toDataURL('image/png');
+
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  const imgWidth = pageWidth - 40;
+  const imgHeight = canvas.height * (imgWidth / canvas.width);
+
+  let y = 20;
+  if (imgHeight < pageHeight - 40) {
+    doc.addImage(imgData, 'PNG', 20, y, imgWidth, imgHeight);
+  } else {
+    // تقسيم على صفحات
+    let position = 20;
+    let remaining = imgHeight;
+    const pageHeightPx = canvas.height * ((pageHeight - 40) / imgHeight);
+
+    while (remaining > 0) {
+      const sectionCanvas = document.createElement('canvas');
+      sectionCanvas.width = canvas.width;
+      sectionCanvas.height = Math.min(pageHeightPx, remaining);
+      const ctx = sectionCanvas.getContext('2d');
+      ctx.drawImage(canvas, 0, canvas.height - remaining, canvas.width, sectionCanvas.height, 0, 0, sectionCanvas.width, sectionCanvas.height);
+      const sectionImg = sectionCanvas.toDataURL('image/png');
+      doc.addImage(sectionImg, 'PNG', 20, 20, imgWidth, (sectionCanvas.height * (imgWidth / sectionCanvas.width)));
+      remaining -= pageHeightPx;
+      if (remaining > 0) doc.addPage();
+    }
+  }
+
+  doc.save('trips.pdf');
+}
+
+
+let driverChart = null;
+
+function updateDriverChart() {
+  const sortBy = document.getElementById('driverSort').value;
+  const topN = Math.max(1, parseInt(document.getElementById('driverTopN').value || '10', 10));
+
+  // تجميع حسب السائق
+  const driverWeight = {};
+  const driverTrips = {};
+  VIEW.forEach(r => {
+    const d = r[COL.driver] || 'بدون سائق';
+    driverWeight[d] = (driverWeight[d] || 0) + toNumber(r[COL.weight]);
+    driverTrips[d]  = (driverTrips[d]  || 0) + 1;
+  });
+
+  let rows = Object.keys(driverTrips).map(d => ({
+    driver: d,
+    trips: driverTrips[d] || 0,
+    weightTon: (driverWeight[d] || 0) / 1000
+  }));
+
+  rows.sort((a,b) => sortBy === 'weight' ? (b.weightTon - a.weightTon) : (b.trips - a.trips));
+  rows = rows.slice(0, topN);
+
+  const labels = rows.map(r => r.driver);
+  const dataTrips = rows.map(r => r.trips);
+  const dataWeight = rows.map(r => +r.weightTon.toFixed(2));
+
+  const ctx = document.getElementById('driverChart').getContext('2d');
+  if (driverChart) driverChart.destroy();
+  driverChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'رحلات', data: dataTrips, backgroundColor: '#f59e0b', yAxisID: 'y' },
+        { label: 'وزن (طن)', data: dataWeight, backgroundColor: '#3b82f6', yAxisID: 'y1' }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        y:  { position: 'left', title: {display:true, text:'رحلات'}, beginAtZero: true },
+        y1: { position: 'right', title: {display:true, text:'طن'}, beginAtZero: true, grid: { drawOnChartArea: false } }
+      }
+    }
+  });
+}
+
+
+/* تسجيل بلجن الداتا ليبلز */
+if (window.ChartDataLabels) {
+  Chart.register(ChartDataLabels);
+}
+
+/* أدوات مساعدة */
 function toNumber(v) {
   if (v == null) return 0;
   let s = String(v).trim();
@@ -176,8 +534,406 @@ function toNumber(v) {
   const n = parseFloat(s);
   return isNaN(n) ? 0 : n;
 }
+function formatTonFromKg(kg) {
+  const t = kg / 1000;
+  return t.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function toYMD(dt) {
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth()+1).padStart(2,'0');
+  const d = String(dt.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+function toYM(dt) {
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth()+1).padStart(2,'0');
+  return `${y}-${m}`;
+}
 
-/* ===== تحميل بيانات الرحلات ===== */
+/* ===== فلترة ===== */
+function applyFilters() {
+  const q = document.getElementById("q").value.trim();
+  const m = document.getElementById("monthSelect").value;
+  const v = document.getElementById("vehicleSelect").value;
+  const d = document.getElementById("dateExact").value;
+
+  VIEW = ALL.filter(r => {
+    const byMonth   = m ? (String(r[COL.month] || "").trim() === m) : true;
+    const byVehicle = v ? (String(r[COL.vehicle] || "").trim() === v) : true;
+
+    let byDate = true;
+    if (d) {
+      if (!r[COL.date]) {
+        byDate = false; // تجاهل السجلات بدون تاريخ عند اختيار تاريخ
+      } else {
+        const recordDate = new Date(r[COL.date]);
+        const exactDate  = new Date(d);
+        byDate = recordDate.toDateString() === exactDate.toDateString();
+      }
+    }
+
+    if (!byMonth || !byVehicle || !byDate) return false;
+
+    if (!q) return true;
+    const hay = [r[COL.month], r[COL.date], r[COL.driver], r[COL.weight], r[COL.vehicle]]
+      .map(x => (x==null?"":String(x))).join(" ").toLowerCase();
+    return hay.includes(q.toLowerCase());
+  });
+}
+
+/* ===== جدول ملخص المركبات ===== */
+function updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers) {
+  // ضم كل المركبات الموجودة في أي من المجموعتين
+  const vehiclesSet = new Set([...Object.keys(byVehicleTrips), ...Object.keys(byVehicleWeight)]);
+  let summary = Array.from(vehiclesSet).map(v => {
+    return {
+      vehicle: v,
+      drivers: Array.from(vehicleDrivers[v] || []),
+      trips: byVehicleTrips[v] || 0,
+      weightTon: (byVehicleWeight[v] || 0) / 1000
+    };
+  });
+
+
+  // Local filters for vehicle summary
+  const vsQuery=document.getElementById("vsSearch").value.toLowerCase();
+  const vsSort=document.getElementById("vsSort").value;
+  if(vsQuery){
+    summary=summary.filter(r=>r.vehicle.toLowerCase().includes(vsQuery)||r.drivers.join(", ").toLowerCase().includes(vsQuery));
+  }
+  if(vsSort==="weight"){
+    summary.sort((a,b)=>b.weightTon-a.weightTon);
+  }else if(vsSort==="trips"){
+    summary.sort((a,b)=>b.trips-a.trips);
+  }
+
+  const tbody = document.getElementById("vehicleSummary");
+  tbody.innerHTML = "";
+  summary.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.className = "border-b hover:bg-gray-50";
+    tr.innerHTML = `
+      <td class="px-4 py-2">${row.vehicle}</td>
+      <td class="px-4 py-2">${row.drivers.join(", ")}</td>
+      <td class="px-4 py-2">${row.trips}</td>
+      <td class="px-4 py-2">${row.weightTon.toFixed(2)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ===== Time Series ===== */
+function computeTimeSeries(agg, metric) {
+  const map = {}; // key -> value
+  VIEW.forEach(r => {
+    let key = null;
+    if (agg === 'day') {
+      if (!r[COL.date]) return; // تجاهل بلا تاريخ
+      const dt = new Date(r[COL.date]);
+      if (isNaN(dt)) return;
+      key = toYMD(dt);
+    } else {
+      // شهري: الأفضل من التاريخ، وإن لم يوجد فاستعمل حقل الشهر
+      if (r[COL.date]) {
+        const dt = new Date(r[COL.date]);
+        if (!isNaN(dt)) key = toYM(dt);
+      }
+      if (!key && r[COL.month]) key = String(r[COL.month]).trim();
+      if (!key) return;
+    }
+
+    if (!(key in map)) map[key] = 0;
+    if (metric === 'weight') {
+      map[key] += toNumber(r[COL.weight]) / 1000; // إلى طن
+    } else {
+      map[key] += 1; // رحلة
+    }
+  });
+
+  // ترتيب المفاتيح زمنيًا إن أمكن
+  let labels = Object.keys(map);
+  if (labels.length === 0) return { labels: [], values: [] };
+
+  if (agg === 'day') {
+    labels.sort((a,b)=> new Date(a) - new Date(b));
+  } else {
+    // إذا كان بالشكل YYYY-MM رتب زمنياً، وإلا اترك كما هو
+    const ymmm = labels.every(k=> /^\d{4}-\d{2}$/.test(k));
+    if (ymmm) labels.sort((a,b)=> a.localeCompare(b));
+  }
+
+  const values = labels.map(k => +map[k].toFixed(2));
+  return { labels, values };
+}
+
+function updateTimeSeriesChart() {
+  const agg = document.getElementById('tsAgg').value;
+  const metric = document.getElementById('tsMetric').value;
+  const {labels, values} = computeTimeSeries(agg, metric);
+
+  const ctx = document.getElementById('timeSeriesChart').getContext('2d');
+  if (timeSeriesChart) timeSeriesChart.destroy();
+  timeSeriesChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: metric === 'weight' ? 'الوزن (طن)' : 'عدد الرحلات',
+        data: values,
+        fill: false,
+        borderColor: metric === 'weight' ? '#3b82f6' : '#10b981',
+        tension: 0.2,
+        pointRadius: 3
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { title: { display: true, text: agg === 'day' ? 'اليوم' : 'الشهر' } },
+        y: { title: { display: true, text: metric === 'weight' ? 'طن' : 'رحلة' }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+/* ===== KPIs + Charts ===== */
+function updateKPIs() {
+  const trips = VIEW.length;
+  const totalWkg = VIEW.reduce((s,r)=> s + toNumber(r[COL.weight]), 0);
+  const avgWkg = trips ? (totalWkg / trips) : 0;
+  const drivers = new Set(VIEW.map(r => r[COL.driver]).filter(Boolean));
+
+  document.getElementById("k_trips").textContent  = trips.toLocaleString();
+  document.getElementById("k_weight").textContent = formatTonFromKg(totalWkg) + " طن";
+  document.getElementById("k_avg").textContent    = formatTonFromKg(avgWkg) + " طن";
+  document.getElementById("k_drivers").textContent= drivers.size.toLocaleString();
+
+  // متوسطات يومية/شهرية
+  const uniqueDays = new Set(VIEW.map(r => r[COL.date]).filter(Boolean));
+  const daysCount = uniqueDays.size;
+  const avgDailyWeight = daysCount ? (totalWkg/1000) / daysCount : 0;
+  const avgDailyTrips = daysCount ? trips / daysCount : 0;
+
+  const monthKeys = new Set();
+  VIEW.forEach(r => {
+    let key = null;
+    if (r[COL.date]) {
+      const dt = new Date(r[COL.date]);
+      if (!isNaN(dt)) key = toYM(dt);
+    }
+    if (!key && r[COL.month]) key = String(r[COL.month]).trim();
+    if (key) monthKeys.add(key);
+  });
+  const monthsCount = monthKeys.size;
+  const avgMonthlyWeight = monthsCount ? (totalWkg/1000) / monthsCount : 0;
+  const avgMonthlyTrips = monthsCount ? trips / monthsCount : 0;
+
+  document.getElementById("k_avgDailyWeight").textContent = avgDailyWeight.toFixed(2);
+  document.getElementById("k_avgDailyTrips").textContent  = avgDailyTrips.toFixed(1);
+  document.getElementById("k_avgMonthlyWeight").textContent = avgMonthlyWeight.toFixed(2);
+  document.getElementById("k_avgMonthlyTrips").textContent  = avgMonthlyTrips.toFixed(1);
+
+
+  // تجميع حسب المركبة + حفظ السائقين
+  const byVehicleWeight = {};
+  const byVehicleTrips  = {};
+  const vehicleDrivers  = {};
+  VIEW.forEach(r => {
+    const v = r[COL.vehicle] || "مجهولة";
+    const d = r[COL.driver] || "بدون سائق";
+    byVehicleWeight[v] = (byVehicleWeight[v] || 0) + toNumber(r[COL.weight]);
+    byVehicleTrips[v]  = (byVehicleTrips[v]  || 0) + 1;
+    if (!vehicleDrivers[v]) vehicleDrivers[v] = new Set();
+    vehicleDrivers[v].add(d);
+  });
+
+  // تحديث جدول الملخص
+  updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers);
+
+  // كروت "الأكثر"
+  let topVehicleWeight = "-";
+  if (Object.keys(byVehicleWeight).length > 0) {
+    topVehicleWeight = Object.entries(byVehicleWeight).sort((a,b)=> b[1]-a[1])[0][0];
+  }
+  document.getElementById("k_topVehicleWeight").textContent = topVehicleWeight;
+
+  let topVehicleTrips = "-";
+  if (Object.keys(byVehicleTrips).length > 0) {
+    topVehicleTrips = Object.entries(byVehicleTrips).sort((a,b)=> b[1]-a[1])[0][0];
+  }
+  document.getElementById("k_topVehicleTrips").textContent = topVehicleTrips;
+
+  // اليوم الأعلى وزناً
+  const byDate = {};
+  VIEW.forEach(r => {
+    const d = r[COL.date];
+    if (!d) return;
+    byDate[d] = (byDate[d] || 0) + toNumber(r[COL.weight]);
+  });
+  let topDay = "-";
+  if (Object.keys(byDate).length > 0) {
+    topDay = Object.entries(byDate).sort((a,b)=> b[1]-a[1])[0][0];
+  }
+  document.getElementById("k_topDay").textContent = topDay;
+
+  // ترتيب افتراضي للمخططات: الوزن حسب الوزن (تنازلي)، الرحلات حسب عدد الرحلات (تنازلي)
+  let weightEntries = Object.entries(byVehicleWeight).sort((a,b)=> b[1]-a[1]);
+  let tripEntries   = Object.entries(byVehicleTrips).sort((a,b)=> b[1]-a[1]);
+
+
+  // Apply local filters Vehicle Weight
+  let vwQuery=document.getElementById("vwSearch").value.toLowerCase();
+  let vwTopN=parseInt(document.getElementById("vwTopN").value||"10");
+  weightEntries=weightEntries.filter(e=>e[0].toLowerCase().includes(vwQuery)).slice(0,vwTopN);
+
+  // Apply local filters Vehicle Trips
+  let vtQuery=document.getElementById("vtSearch").value.toLowerCase();
+  let vtTopN=parseInt(document.getElementById("vtTopN").value||"10");
+  tripEntries=tripEntries.filter(e=>e[0].toLowerCase().includes(vtQuery)).slice(0,vtTopN);
+
+  const labelsWeight = weightEntries.map(e=>e[0]);
+  const dataWeightTon = weightEntries.map(e=> (e[1]/1000).toFixed(2));
+
+  const labelsTrips = tripEntries.map(e=>{
+    const v = e[0];
+    const drivers = Array.from(vehicleDrivers[v]||[]).join(", ");
+    return v + " – " + drivers;
+  });
+  const dataTrips = tripEntries.map(e=> e[1]);
+
+  // إظهار/إخفاء الشارتات (لو مركبة واحدة فقط)
+  document.getElementById("chartWeightBox").style.display = labelsWeight.length > 1 ? "block" : "none";
+  document.getElementById("chartTripsBox").style.display  = labelsTrips.length  > 1 ? "block" : "none";
+
+  // Bar: وزن
+  if (labelsWeight.length > 1) {
+    if (vehicleWeightChart) vehicleWeightChart.destroy();
+    const ctx1 = document.getElementById("vehicleWeightChart").getContext("2d");
+    vehicleWeightChart = new Chart(ctx1, {
+      type: 'bar',
+      data: {
+        labels: labelsWeight,
+        datasets: [{
+          label: "الوزن الكلي (طن)",
+          data: dataWeightTon,
+          backgroundColor: "rgba(59,130,246,0.7)"
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false }, tooltip: { callbacks: {
+          label: (ctx)=> ` ${ctx.parsed.y} طن`
+        }}},
+        scales: {
+          x: { title: { display: true, text: "المركبة" } },
+          y: { title: { display: true, text: "الوزن (طن)" } }
+        }
+      }
+    });
+  }
+
+  // Pie: رحلات + نسب مئوية + ملصق المركبة – السائقين
+  if (labelsTrips.length > 1) {
+    if (vehicleTripsChart) vehicleTripsChart.destroy();
+    const ctx2 = document.getElementById("vehicleTripsChart").getContext("2d");
+    vehicleTripsChart = new Chart(ctx2, {
+      type: 'pie',
+      data: {
+        labels: labelsTrips,
+        datasets: [{
+          label: "عدد الرحلات",
+          data: dataTrips,
+          backgroundColor: [
+            "#3b82f6","#10b981","#f59e0b","#ef4444",
+            "#8b5cf6","#06b6d4","#84cc16","#d946ef",
+            "#fb7185","#22c55e","#a78bfa"
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'right' },
+          tooltip: { callbacks: {
+            label: (ctx) => {
+              const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+              const v = ctx.parsed;
+              const pct = total ? (v*100/total).toFixed(1) : 0;
+              return ` ${ctx.label}: ${v} رحلة (${pct}%)`;
+            }
+          }},
+          datalabels: {
+            color: '#fff',
+            formatter: (value, ctx) => {
+              const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+              const percentage = sum ? (value * 100 / sum).toFixed(1) + "%" : "0%";
+              return percentage;
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // أخيراً: حدّث السلاسل الزمنية
+  updateTimeSeriesChart();
+  updateDriverChart();
+}
+
+/* ===== جدول الرحلات ===== */
+function updateTable() {
+  const tb = document.getElementById("tbody");
+  const empty = document.getElementById("emptyState");
+  tb.innerHTML = "";
+  if (VIEW.length === 0) {
+    empty.classList.remove("hidden");
+    return;
+  }
+  empty.classList.add("hidden");
+  VIEW.forEach(r => {
+    const tr = document.createElement("tr");
+    tr.className = "border-b hover:bg-gray-50";
+    tr.innerHTML = `
+      <td class="px-4 py-2">${r[COL.month] || ""}</td>
+      <td class="px-4 py-2">${r[COL.date] || ""}</td>
+      <td class="px-4 py-2">${r[COL.driver] || ""}</td>
+      <td class="px-4 py-2">${formatTonFromKg(toNumber(r[COL.weight]))}</td>
+      <td class="px-4 py-2">${r[COL.vehicle] || ""}</td>
+    `;
+    tb.appendChild(tr);
+  });
+}
+
+/* ===== تعبئة القوائم ===== */
+function fillMonthSelect() {
+  const sel = document.getElementById("monthSelect");
+  const months = Array.from(new Set(ALL.map(r => r[COL.month]).filter(Boolean)));
+  months.forEach(m => {
+    const opt = document.createElement("option");
+    opt.value = opt.textContent = m;
+    sel.appendChild(opt);
+  });
+}
+function fillVehicleSelect() {
+  const sel = document.getElementById("vehicleSelect");
+  const vehicles = Array.from(new Set(ALL.map(r => r[COL.vehicle]).filter(Boolean)));
+  vehicles.forEach(v => {
+    const opt = document.createElement("option");
+    opt.value = opt.textContent = v;
+    sel.appendChild(opt);
+  });
+}
+
+/* ===== Render ===== */
+function render() {
+  applyFilters();
+  updateKPIs();
+  updateTable();
+  renderVehAnalysis();
+}
+
+/* ===== تحميل البيانات ===== */
 async function loadData() {
   try {
     const result = await new Promise((resolve, reject) => {
@@ -197,7 +953,9 @@ async function loadData() {
       });
       return obj;
     });
-    renderVehAnalysis();
+    fillMonthSelect();
+    fillVehicleSelect();
+    render();
   } catch (e) {
     console.error("خطأ في جلب/قراءة الشيت:", e);
     alert("تعذر تحميل البيانات من الشيت.");
@@ -205,10 +963,38 @@ async function loadData() {
 }
 
 /* ===== Events ===== */
-document.getElementById('vaSearch').addEventListener('input',renderVehAnalysis);
-document.getElementById('vaYear').addEventListener('input',renderVehAnalysis);
-document.getElementById('vaSort').addEventListener('change',renderVehAnalysis);
+document.getElementById("q").addEventListener("input", render);
+document.getElementById("monthSelect").addEventListener("change", render);
+document.getElementById("vehicleSelect").addEventListener("change", render);
+document.getElementById("dateExact").addEventListener("change", render);
+document.getElementById("resetBtn").addEventListener("click", () => {
+  document.getElementById("q").value = "";
+  document.getElementById("monthSelect").value = "";
+  document.getElementById("vehicleSelect").value = "";
+  document.getElementById("dateExact").value = "";
 
+  render();
+});
+document.getElementById('tsAgg').addEventListener('change', updateTimeSeriesChart);
+document.getElementById('tsMetric').addEventListener('change', updateTimeSeriesChart);
+document.getElementById('btnCSV').addEventListener('click', exportCSV);
+document.getElementById('btnXLSX').addEventListener('click', exportXLSX);
+document.getElementById('btnPDF').addEventListener('click', exportPDF);
+
+document.getElementById('vwSearch').addEventListener('input',render);
+document.getElementById('vwTopN').addEventListener('input',render);
+document.getElementById('vtSearch').addEventListener('input',render);
+document.getElementById('vtTopN').addEventListener('input',render);
+document.getElementById('vsSearch').addEventListener('input',render);
+document.getElementById('vsSort').addEventListener('change',render);
+document.getElementById('vaSearch').addEventListener('input',render);
+document.getElementById('vaYear').addEventListener('input',render);
+document.getElementById('vaSort').addEventListener('change',render);
+
+document.getElementById('driverSort').addEventListener('change', updateDriverChart);
+document.getElementById('driverTopN').addEventListener('input', updateDriverChart);
+
+/* ===== Start ===== */
 document.addEventListener("DOMContentLoaded", ()=>{loadData();loadVehSheet();});
 </script>
 </body>
