@@ -61,7 +61,7 @@
     </div>
 
     <!-- KPIs -->
-    <div class="grid grid-cols-1 md:grid-cols-10 gap-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-9 gap-6 mb-6">
       <div class="bg-white rounded-xl shadow p-6">
         <p class="text-gray-500">إجمالي الرحلات</p>
         <h3 id="k_trips" class="text-2xl font-bold text-blue-600">0</h3>
@@ -206,15 +206,6 @@
       <div class="flex flex-wrap items-center gap-3 mb-4">
         <label class="text-sm">بحث:</label>
         <input id="vaSearch" type="text" placeholder="ابحث..." class="border rounded-lg px-3 py-1">
-        
-        <label class="text-sm">ترتيب:</label>
-        <select id="vaSort" class="border rounded-lg px-3 py-1">
-          <option value="">بدون</option>
-          <option value="eff">نسبة الاستغلال %</option>
-          <option value="year">سنة التصنيع</option>
-          <option value="cap">السعة النظرية</option>
-        </select>
-
         <label class="text-sm">من سنة تصنيع:</label>
         <input id="vaYear" type="number" placeholder="2000" class="w-24 border rounded-lg px-3 py-1">
       </div>
@@ -237,14 +228,6 @@
           <tbody id="vehAnalysisTable"></tbody>
         </table>
       </div>
-    </div>
-
-
-
-    <!-- Vehicle Efficiency Scatter -->
-    <div id="vehScatterBox" class="bg-white rounded-xl shadow p-6 mb-6">
-      <h3 class="mb-4 font-semibold">العلاقة بين عدد الرحلات ونسبة الاستغلال</h3>
-      <canvas id="vehScatterChart" height="120"></canvas>
     </div>
 
 
@@ -301,53 +284,6 @@ let timeSeriesChart    = null;
 const VEH_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=2001178330&single=true&output=csv";
 let VEHICLES=[];
 
-let vehScatterChart=null;
-
-function updateVehScatter(){
-  const ctx=document.getElementById('vehScatterChart').getContext('2d');
-  if(vehScatterChart) vehScatterChart.destroy();
-
-  const dataPoints=[];
-  VEHICLES.forEach(vh=>{
-    const vnum=vh["رقم المركبة"];
-    const capM3=toNumber(vh["سعة المركبة بالمتر المكعب"]);
-    const dens=toNumber(vh["كثافة التحميل"]);
-    const capTon=capM3*dens;
-    const trips=VIEW.filter(r=>r[COL.vehicle]===vnum).length;
-    const wkg=VIEW.filter(r=>r[COL.vehicle]===vnum).reduce((s,r)=>s+toNumber(r[COL.weight]),0);
-    const wton=wkg/1000;
-    const eff=trips>0&&capTon>0?(wton/(trips*capTon))*100:0;
-    if(trips>0){
-      dataPoints.push({x:trips,y:eff,label:vnum});
-    }
-  });
-
-  vehScatterChart=new Chart(ctx,{
-    type:'scatter',
-    data:{
-      datasets:[{
-        label:'مركبات',
-        data:dataPoints,
-        backgroundColor:'#f43f5e'
-      }]
-    },
-    options:{
-      plugins:{
-        tooltip:{
-          callbacks:{
-            label:(ctx)=>`مركبة ${ctx.raw.label}: رحلات=${ctx.raw.x}, استغلال=${ctx.raw.y.toFixed(1)}%`
-          }
-        }
-      },
-      scales:{
-        x:{title:{display:true,text:'عدد الرحلات'},beginAtZero:true},
-        y:{title:{display:true,text:'نسبة الاستغلال %'},beginAtZero:true,max:120}
-      }
-    }
-  });
-}
-
-
 function renderVehAnalysis(){
   const tb=document.getElementById("vehAnalysisTable");
   if(!tb) return;
@@ -364,7 +300,6 @@ function renderVehAnalysis(){
   const vaQuery=document.getElementById("vaSearch").value.toLowerCase();
   const vaYear=parseInt(document.getElementById("vaYear").value||"0");
 
-  const rows=[];
   VEHICLES.forEach(vh=>{
     const vnum=vh["رقم المركبة"];
 
@@ -390,20 +325,8 @@ function renderVehAnalysis(){
       <td class="px-4 py-2">${wton.toFixed(2)}</td>
       <td class="px-4 py-2">${eff.toFixed(1)}%</td>
     `;
-    rows.push({vnum,year,capM3,capTon,trips,wton,eff,tr});
+    tb.appendChild(tr);
   });
-
-
-  const vaSort=document.getElementById("vaSort").value;
-  // Apply sorting
-  rows.sort((a,b)=>{
-    if(vaSort==="eff") return b.eff-a.eff;
-    if(vaSort==="year") return parseInt(b.year||"0")-parseInt(a.year||"0");
-    if(vaSort==="cap") return b.capTon-a.capTon;
-    return 0;
-  });
-
-  rows.forEach(r=>tb.appendChild(r.tr));
 }
 
 async function loadVehSheet(){
@@ -413,7 +336,6 @@ async function loadVehSheet(){
     });
     VEHICLES=result.data;
     renderVehAnalysis();
-  updateVehScatter();
   }catch(e){console.error("خطأ تحميل شيت المركبات:",e);}
 }
 
@@ -800,24 +722,6 @@ function updateKPIs() {
     vehicleDrivers[v].add(d);
   });
 
-
-  // حساب المؤشر المركب (استغلال × جذر عدد الرحلات)
-  let compIndex=0;
-  Object.keys(byVehicleTrips).forEach(v=>{
-    const trips=byVehicleTrips[v]||0;
-    const wkg=byVehicleWeight[v]||0;
-    const vh=VEHICLES.find(x=>x["رقم المركبة"]===v);
-    if(vh){
-      const capM3=toNumber(vh["سعة المركبة بالمتر المكعب"]);
-      const dens=toNumber(vh["كثافة التحميل"]);
-      const capTon=capM3*dens;
-      const eff=trips>0&&capTon>0?( (wkg/1000)/(trips*capTon) )*100:0;
-      const idx=eff*Math.sqrt(trips);
-      compIndex=Math.max(compIndex,idx);
-    }
-  });
-  document.getElementById("k_effComposite").textContent=compIndex.toFixed(1);
-
   // تحديث جدول الملخص
   updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers);
 
@@ -971,20 +875,8 @@ function updateTable() {
       <td class="px-4 py-2">${formatTonFromKg(toNumber(r[COL.weight]))}</td>
       <td class="px-4 py-2">${r[COL.vehicle] || ""}</td>
     `;
-    rows.push({vnum,year,capM3,capTon,trips,wton,eff,tr});
+    tb.appendChild(tr);
   });
-
-
-  const vaSort=document.getElementById("vaSort").value;
-  // Apply sorting
-  rows.sort((a,b)=>{
-    if(vaSort==="eff") return b.eff-a.eff;
-    if(vaSort==="year") return parseInt(b.year||"0")-parseInt(a.year||"0");
-    if(vaSort==="cap") return b.capTon-a.capTon;
-    return 0;
-  });
-
-  rows.forEach(r=>tb.appendChild(r.tr));
 }
 
 /* ===== تعبئة القوائم ===== */
@@ -1013,7 +905,6 @@ function render() {
   updateKPIs();
   updateTable();
   renderVehAnalysis();
-  updateVehScatter();
 }
 
 /* ===== تحميل البيانات ===== */
@@ -1072,7 +963,6 @@ document.getElementById('vsSearch').addEventListener('input',render);
 document.getElementById('vsSort').addEventListener('change',render);
 document.getElementById('vaSearch').addEventListener('input',render);
 document.getElementById('vaYear').addEventListener('input',render);
-document.getElementById('vaSort').addEventListener('change',render);
 
 document.getElementById('driverSort').addEventListener('change', updateDriverChart);
 document.getElementById('driverTopN').addEventListener('input', updateDriverChart);
