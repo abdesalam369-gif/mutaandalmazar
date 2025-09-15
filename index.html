@@ -207,17 +207,7 @@
         <label class="text-sm">بحث:</label>
         <input id="vaSearch" type="text" placeholder="ابحث..." class="border rounded-lg px-3 py-1">
         <label class="text-sm">من سنة تصنيع:</label>
-        
-        
-        <label class="text-sm">ترتيب حسب:</label>
-        <select id="vaSort" class="border rounded-lg px-3 py-1">
-          <option value="">بدون ترتيب</option>
-          <option value="eff">نسبة الاستغلال (تنازلي)</option>
-          <option value="year">سنة التصنيع (تنازلي)</option>
-          <option value="capTon">السعة النظرية (تنازلي)</option>
-        </select>
-
-        
+        <input id="vaYear" type="number" placeholder="2000" class="w-24 border rounded-lg px-3 py-1">
       </div>
 
         <h3 class="font-semibold">تحليل كفاءة المركبات</h3>
@@ -299,7 +289,6 @@ function renderVehAnalysis(){
   if(!tb) return;
   tb.innerHTML="";
   if(VEHICLES.length===0||VIEW.length===0) return;
-
   const byVehicleWeight={};
   const byVehicleTrips={};
   VIEW.forEach(r=>{
@@ -310,46 +299,31 @@ function renderVehAnalysis(){
 
   const vaQuery=document.getElementById("vaSearch").value.toLowerCase();
   const vaYear=parseInt(document.getElementById("vaYear").value||"0");
-  const vaSort=document.getElementById("vaSort").value;
 
-  let rows=[];
   VEHICLES.forEach(vh=>{
     const vnum=vh["رقم المركبة"];
+
+    // apply local filters
     if(vaQuery && !vnum.toLowerCase().includes(vaQuery)) return;
-
-    const year=vh["سنة التصنيع"]||"";
     if(vaYear && parseInt(year||"0")<vaYear) return;
-
     const capM3=toNumber(vh["سعة المركبة بالمتر المكعب"]);
     const dens=toNumber(vh["كثافة التحميل"]);
     const capTon=capM3*dens;
+    const year=vh["سنة التصنيع"]||"";
     const trips=byVehicleTrips[vnum]||0;
     const wkg=byVehicleWeight[vnum]||0;
     const wton=wkg/1000;
     const eff=trips>0&&capTon>0?(wton/(trips*capTon))*100:0;
-
-    rows.push({vnum,year,capM3,capTon,trips,wton,eff});
-  });
-
-  if(vaSort==="eff"){
-    rows.sort((a,b)=>b.eff-a.eff);
-  }else if(vaSort==="year"){
-    rows.sort((a,b)=>parseInt(b.year||"0")-parseInt(a.year||"0"));
-  }else if(vaSort==="capTon"){
-    rows.sort((a,b)=>b.capTon-a.capTon);
-  }
-
-  rows.forEach(r=>{
     const tr=document.createElement("tr");
     tr.className="border-b hover:bg-gray-50";
     tr.innerHTML=`
-      <td class="px-4 py-2">${r.vnum}</td>
-      <td class="px-4 py-2">${r.year}</td>
-      <td class="px-4 py-2">${r.capM3.toFixed(1)}</td>
-      <td class="px-4 py-2">${r.capTon.toFixed(2)}</td>
-      <td class="px-4 py-2">${r.trips}</td>
-      <td class="px-4 py-2">${r.wton.toFixed(2)}</td>
-      <td class="px-4 py-2">${r.eff.toFixed(1)}%</td>
+      <td class="px-4 py-2">${vnum}</td>
+      <td class="px-4 py-2">${year}</td>
+      <td class="px-4 py-2">${capM3.toFixed(1)}</td>
+      <td class="px-4 py-2">${capTon.toFixed(2)}</td>
+      <td class="px-4 py-2">${trips}</td>
+      <td class="px-4 py-2">${wton.toFixed(2)}</td>
+      <td class="px-4 py-2">${eff.toFixed(1)}%</td>
     `;
     tb.appendChild(tr);
   });
@@ -989,7 +963,6 @@ document.getElementById('vsSearch').addEventListener('input',render);
 document.getElementById('vsSort').addEventListener('change',render);
 document.getElementById('vaSearch').addEventListener('input',render);
 document.getElementById('vaYear').addEventListener('input',render);
-document.getElementById('vaSort').addEventListener('change',render);
 
 document.getElementById('driverSort').addEventListener('change', updateDriverChart);
 document.getElementById('driverTopN').addEventListener('input', updateDriverChart);
