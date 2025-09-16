@@ -83,7 +83,7 @@
         <p class="text-gray-500">اليوم الأعلى وزناً</p>
         <h3 id="k_topDay" class="text-xl font-bold text-pink-600">-</h3>
       </div>
-          <div class="bg-white rounded-xl shadow p-6">
+      <div class="bg-white rounded-xl shadow p-6">
         <p class="text-gray-500">متوسط يومي</p>
         <div class="mt-1 space-y-1 text-sm">
           <div>الوزن: <span id="k_avgDailyWeight" class="font-bold text-blue-600">0</span> طن/يوم</div>
@@ -274,7 +274,7 @@ function renderVehAnalysis(){
   const tb=document.getElementById("vehAnalysisTable");
   if(!tb) return;
   tb.innerHTML="";
-  if(VEHICLES.length===0||VIEW.length===0) return;
+if(VEHICLES.length===0||VIEW.length===0) return;
   const byVehicleWeight={};
   const byVehicleTrips={};
   VIEW.forEach(r=>{
@@ -282,14 +282,12 @@ function renderVehAnalysis(){
     byVehicleWeight[v]=(byVehicleWeight[v]||0)+toNumber(r[COL.weight]);
     byVehicleTrips[v]=(byVehicleTrips[v]||0)+1;
   });
-
-  const vaQuery=document.getElementById("vaSearch").value.toLowerCase();
+const vaQuery=document.getElementById("vaSearch").value.toLowerCase();
   const vaYearFilter=parseInt(document.getElementById("vaYear").value||"0");
   const vaSort=document.getElementById("vaSort").value;
 
   const vehicleData = [];
-
-  VEHICLES.forEach(vh => {
+VEHICLES.forEach(vh => {
     const vnum = vh["رقم المركبة"];
     const year = parseInt(vh["سنة التصنيع"] || "0");
 
@@ -303,14 +301,14 @@ function renderVehAnalysis(){
     const trips = byVehicleTrips[vnum] || 0;
     const wkg = byVehicleWeight[vnum] || 0;
     const wton = wkg / 1000;
+ 
     const eff = (trips > 0 && capTon > 0) ? (wton / (trips * capTon)) * 100 : 0;
 
     vehicleData.push({
       vnum, year, capM3, capTon, trips, wton, eff
     });
   });
-
-  // تطبيق الترتيب
+// تطبيق الترتيب
   vehicleData.sort((a, b) => {
     if (vaSort === "year") {
       return b.year - a.year;
@@ -320,8 +318,7 @@ function renderVehAnalysis(){
       return b.eff - a.eff;
     }
   });
-
-  // عرض البيانات في الجدول
+// عرض البيانات في الجدول
   vehicleData.forEach(row => {
     const tr = document.createElement("tr");
     tr.className = "border-b hover:bg-gray-50";
@@ -343,7 +340,7 @@ async function loadVehSheet(){
     const result=await new Promise((resolve,reject)=>{
       Papa.parse(VEH_URL,{download:true,header:true,skipEmptyLines:true,complete:resolve,error:reject});
     });
-    VEHICLES=result.data;
+VEHICLES=result.data;
     renderVehAnalysis();
   }catch(e){console.error("خطأ تحميل شيت المركبات:",e);}
 }
@@ -353,18 +350,18 @@ async function loadVehSheet(){
 function exportCSV() {
   // تحضير بيانات VIEW إلى CSV
   const headers = ['الشهر','تاريخ التوزين الثاني','السائق','صافي التحميل (طن)','رقم المركبة'];
-  const rows = VIEW.map(r => [
+const rows = VIEW.map(r => [
     r[COL.month] || '',
     r[COL.date] || '',
     r[COL.driver] || '',
     (toNumber(r[COL.weight])/1000).toFixed(2),
     r[COL.vehicle] || ''
   ]);
-  const csv = [headers.join(','), ...rows.map(a=>a.join(','))].join('\n');
+const csv = [headers.join(','), ...rows.map(a=>a.join(','))].join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
+a.href = url;
   a.download = 'trips.csv';
   document.body.appendChild(a);
   a.click();
@@ -375,9 +372,9 @@ function exportCSV() {
 function buildVehicleSummaryArray() {
   // إعادة بناء نفس بيانات ملخص المركبات الحالية
   const byVehicleWeight = {};
-  const byVehicleTrips  = {};
+const byVehicleTrips  = {};
   const vehicleDrivers  = {};
-  VIEW.forEach(r => {
+VIEW.forEach(r => {
     const v = r[COL.vehicle] || 'مجهولة';
     const d = r[COL.driver] || 'بدون سائق';
     byVehicleWeight[v] = (byVehicleWeight[v] || 0) + toNumber(r[COL.weight]);
@@ -385,14 +382,14 @@ function buildVehicleSummaryArray() {
     if (!vehicleDrivers[v]) vehicleDrivers[v] = new Set();
     vehicleDrivers[v].add(d);
   });
-  const vehiclesSet = new Set([...Object.keys(byVehicleTrips), ...Object.keys(byVehicleWeight)]);
+const vehiclesSet = new Set([...Object.keys(byVehicleTrips), ...Object.keys(byVehicleWeight)]);
   const summary = Array.from(vehiclesSet).map(v => ({
     'رقم المركبة': v,
     'السائقين': Array.from(vehicleDrivers[v] || []).join(', '),
     'عدد الرحلات': byVehicleTrips[v] || 0,
     'إجمالي الوزن (طن)': ((byVehicleWeight[v] || 0)/1000).toFixed(2)
   }));
-  return summary;
+return summary;
 }
 
 function exportXLSX() {
@@ -403,46 +400,46 @@ function exportXLSX() {
     'صافي التحميل (طن)': (toNumber(r[COL.weight])/1000).toFixed(2),
     'رقم المركبة': r[COL.vehicle] || ''
   }));
-  const wb = XLSX.utils.book_new();
+const wb = XLSX.utils.book_new();
   const ws1 = XLSX.utils.json_to_sheet(trips);
   XLSX.utils.book_append_sheet(wb, ws1, 'سجل الرحلات');
   const ws2 = XLSX.utils.json_to_sheet(buildVehicleSummaryArray());
   XLSX.utils.book_append_sheet(wb, ws2, 'ملخص المركبات');
-  XLSX.writeFile(wb, 'transport_dashboard.xlsx');
+XLSX.writeFile(wb, 'transport_dashboard.xlsx');
 }
 
 async function exportPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF('l', 'pt', 'a4');
-  // landscape
+// landscape
 
   const node = document.getElementById('rawTripsBox');
   const canvas = await html2canvas(node, {scale: 2});
   const imgData = canvas.toDataURL('image/png');
-  const pageWidth = doc.internal.pageSize.getWidth();
+const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
   const imgWidth = pageWidth - 40;
-  const imgHeight = canvas.height * (imgWidth / canvas.width);
+const imgHeight = canvas.height * (imgWidth / canvas.width);
 
   let y = 20;
-  if (imgHeight < pageHeight - 40) {
+if (imgHeight < pageHeight - 40) {
     doc.addImage(imgData, 'PNG', 20, y, imgWidth, imgHeight);
-  } else {
+} else {
     // تقسيم على صفحات
     let position = 20;
-    let remaining = imgHeight;
+let remaining = imgHeight;
     const pageHeightPx = canvas.height * ((pageHeight - 40) / imgHeight);
-    while (remaining > 0) {
+while (remaining > 0) {
       const sectionCanvas = document.createElement('canvas');
       sectionCanvas.width = canvas.width;
-      sectionCanvas.height = Math.min(pageHeightPx, remaining);
+sectionCanvas.height = Math.min(pageHeightPx, remaining);
       const ctx = sectionCanvas.getContext('2d');
       ctx.drawImage(canvas, 0, canvas.height - remaining, canvas.width, sectionCanvas.height, 0, 0, sectionCanvas.width, sectionCanvas.height);
-      const sectionImg = sectionCanvas.toDataURL('image/png');
+const sectionImg = sectionCanvas.toDataURL('image/png');
       doc.addImage(sectionImg, 'PNG', 20, 20, imgWidth, (sectionCanvas.height * (imgWidth / sectionCanvas.width)));
       remaining -= pageHeightPx;
-      if (remaining > 0) doc.addPage();
+if (remaining > 0) doc.addPage();
     }
   }
 
@@ -454,25 +451,25 @@ let driverChart = null;
 function updateDriverChart() {
   const sortBy = document.getElementById('driverSort').value;
   const topN = Math.max(1, parseInt(document.getElementById('driverTopN').value || '10', 10));
-  // تجميع حسب السائق
+// تجميع حسب السائق
   const driverWeight = {};
   const driverTrips = {};
-  VIEW.forEach(r => {
+VIEW.forEach(r => {
     const d = r[COL.driver] || 'بدون سائق';
     driverWeight[d] = (driverWeight[d] || 0) + toNumber(r[COL.weight]);
     driverTrips[d]  = (driverTrips[d]  || 0) + 1;
   });
-  let rows = Object.keys(driverTrips).map(d => ({
+let rows = Object.keys(driverTrips).map(d => ({
     driver: d,
     trips: driverTrips[d] || 0,
     weightTon: (driverWeight[d] || 0) / 1000
   }));
-  rows.sort((a,b) => sortBy === 'weight' ? (b.weightTon - a.weightTon) : (b.trips - a.trips));
+rows.sort((a,b) => sortBy === 'weight' ? (b.weightTon - a.weightTon) : (b.trips - a.trips));
   rows = rows.slice(0, topN);
-  const labels = rows.map(r => r.driver);
+const labels = rows.map(r => r.driver);
   const dataTrips = rows.map(r => r.trips);
   const dataWeight = rows.map(r => +r.weightTon.toFixed(2));
-  const ctx = document.getElementById('driverChart').getContext('2d');
+const ctx = document.getElementById('driverChart').getContext('2d');
   if (driverChart) driverChart.destroy();
   driverChart = new Chart(ctx, {
     type: 'bar',
@@ -504,20 +501,20 @@ if (window.ChartDataLabels) {
 function toNumber(v) {
   if (v == null) return 0;
   let s = String(v).trim();
-  const arabicMap = {'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
+const arabicMap = {'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
   s = s.replace(/[٠-٩]/g, d => arabicMap[d] || d);
   s = s.replace(/[^\d.]/g, "");
   const n = parseFloat(s);
-  return isNaN(n) ? 0 : n;
+return isNaN(n) ? 0 : n;
 }
 function formatTonFromKg(kg) {
   const t = kg / 1000;
-  return t.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+return t.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 function toYMD(dt) {
   const y = dt.getFullYear();
   const m = String(dt.getMonth()+1).padStart(2,'0');
-  const d = String(dt.getDate()).padStart(2,'0');
+const d = String(dt.getDate()).padStart(2,'0');
   return `${y}-${m}-${d}`;
 }
 
@@ -528,7 +525,6 @@ const arabicMonthMap = {
   "Jan": "01", "Feb": "02", "Mar": "03", "Apr": "04", "May": "05", "Jun": "06",
   "Jul": "07", "Aug": "08", "Sep": "09", "Oct": "10", "Nov": "11", "Dec": "12"
 };
-
 function toYM(dt) {
   const y = dt.getFullYear();
   const m = String(dt.getMonth()+1).padStart(2,'0');
@@ -540,7 +536,7 @@ function applyFilters() {
   const q = document.getElementById("q").value.trim();
   const m = document.getElementById("monthSelect").value;
   const v = document.getElementById("vehicleSelect").value;
-  const d = document.getElementById("dateExact").value;
+const d = document.getElementById("dateExact").value;
 
   VIEW = ALL.filter(r => {
     const byMonth   = m ? (String(r[COL.month] || "").trim() === m) : true;
@@ -552,6 +548,7 @@ function applyFilters() {
         byDate = false; // تجاهل السجلات بدون تاريخ عند اختيار تاريخ
       } else {
         const recordDate = new Date(r[COL.date]);
+ 
         const exactDate  = new Date(d);
         byDate = recordDate.toDateString() === exactDate.toDateString();
       }
@@ -570,7 +567,7 @@ function applyFilters() {
 function updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers) {
   // ضم كل المركبات الموجودة في أي من المجموعتين
   const vehiclesSet = new Set([...Object.keys(byVehicleTrips), ...Object.keys(byVehicleWeight)]);
-  let summary = Array.from(vehiclesSet).map(v => {
+let summary = Array.from(vehiclesSet).map(v => {
     return {
       vehicle: v,
       drivers: Array.from(vehicleDrivers[v] || []),
@@ -578,12 +575,12 @@ function updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers) {
       weightTon: (byVehicleWeight[v] || 0) / 1000
     };
   });
-  // Local filters for vehicle summary
+// Local filters for vehicle summary
   const vsQuery=document.getElementById("vsSearch").value.toLowerCase();
   const vsSort=document.getElementById("vsSort").value;
   if(vsQuery){
     summary=summary.filter(r=>r.vehicle.toLowerCase().includes(vsQuery)||r.drivers.join(", ").toLowerCase().includes(vsQuery));
-  }
+}
   if(vsSort==="weight"){
     summary.sort((a,b)=>b.weightTon-a.weightTon);
   }else if(vsSort==="trips"){
@@ -591,7 +588,7 @@ function updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers) {
   }
 
   const tbody = document.getElementById("vehicleSummary");
-  tbody.innerHTML = "";
+tbody.innerHTML = "";
   summary.forEach(row => {
     const tr = document.createElement("tr");
     tr.className = "border-b hover:bg-gray-50";
@@ -617,8 +614,10 @@ function computeTimeSeries(agg, metric) {
       key = toYMD(dt);
     } else { // 'month'
       const month = String(r[COL.month] || "").trim();
-      if (!month) return;
-      key = month;
+      const year = "2025"; // سنة ثابتة للفرز
+      const monthNumber = arabicMonthMap[month];
+      if (!monthNumber) return; // تجاهل الشهور غير الصالحة
+      key = `${year}-${monthNumber}`;
     }
 
     if (!(key in map)) map[key] = 0;
@@ -630,20 +629,26 @@ function computeTimeSeries(agg, metric) {
   });
 
   let labels = Object.keys(map);
-  // Sort the labels alphabetically
-  labels.sort();
+  labels.sort(); // الفرز الأبجدي للمفاتيح يضمن الترتيب الزمني
+
+  const displayLabels = labels.map(key => {
+    const monthNumber = key.substring(5);
+    const monthName = Object.keys(arabicMonthMap).find(name => arabicMonthMap[name] === monthNumber);
+    return monthName || key;
+  });
+  
   const values = labels.map(k => +map[k].toFixed(2));
-  return { labels, values };
+  return { labels: displayLabels, values };
 }
 
 
 function updateTimeSeriesChart() {
   const agg = document.getElementById('tsAgg').value;
   const metric = document.getElementById('tsMetric').value;
-  const {labels, values} = computeTimeSeries(agg, metric);
+const {labels, values} = computeTimeSeries(agg, metric);
   const ctx = document.getElementById('timeSeriesChart').getContext('2d');
   if (timeSeriesChart) timeSeriesChart.destroy();
-  timeSeriesChart = new Chart(ctx, {
+timeSeriesChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels,
@@ -654,6 +659,7 @@ function updateTimeSeriesChart() {
         borderColor: metric === 'weight' ? '#3b82f6' : '#10b981',
         tension: 0.2,
         pointRadius: 3
+     
       }]
     },
     options: {
@@ -670,23 +676,23 @@ function updateTimeSeriesChart() {
 /* ===== KPIs + Charts ===== */
 function updateKPIs() {
   const trips = VIEW.length;
-  const totalWkg = VIEW.reduce((s,r)=> s + toNumber(r[COL.weight]), 0);
+const totalWkg = VIEW.reduce((s,r)=> s + toNumber(r[COL.weight]), 0);
   const avgWkg = trips ? (totalWkg / trips) : 0;
-  const drivers = new Set(VIEW.map(r => r[COL.driver]).filter(Boolean));
+const drivers = new Set(VIEW.map(r => r[COL.driver]).filter(Boolean));
 
   document.getElementById("k_trips").textContent  = trips.toLocaleString();
   document.getElementById("k_weight").textContent = formatTonFromKg(totalWkg) + " طن";
-  document.getElementById("k_avg").textContent    = formatTonFromKg(avgWkg) + " طن";
+document.getElementById("k_avg").textContent    = formatTonFromKg(avgWkg) + " طن";
   document.getElementById("k_drivers").textContent= drivers.size.toLocaleString();
-  // متوسطات يومية/شهرية
+// متوسطات يومية/شهرية
   const uniqueDays = new Set(VIEW.map(r => r[COL.date]).filter(Boolean));
   const daysCount = uniqueDays.size;
   const avgDailyWeight = daysCount ?
-  (totalWkg/1000) / daysCount : 0;
+(totalWkg/1000) / daysCount : 0;
   const avgDailyTrips = daysCount ? trips / daysCount : 0;
 
   const monthKeys = new Set();
-  VIEW.forEach(r => {
+VIEW.forEach(r => {
     let key = null;
     if (r[COL.date]) {
       const dt = new Date(r[COL.date]);
@@ -695,19 +701,19 @@ function updateKPIs() {
     if (!key && r[COL.month]) key = String(r[COL.month]).trim();
     if (key) monthKeys.add(key);
   });
-  const monthsCount = monthKeys.size;
+const monthsCount = monthKeys.size;
   const avgMonthlyWeight = monthsCount ? (totalWkg/1000) / monthsCount : 0;
   const avgMonthlyTrips = monthsCount ?
-  trips / monthsCount : 0;
+trips / monthsCount : 0;
 
   document.getElementById("k_avgDailyWeight").textContent = avgDailyWeight.toFixed(2);
   document.getElementById("k_avgDailyTrips").textContent  = avgDailyTrips.toFixed(1);
   document.getElementById("k_avgMonthlyWeight").textContent = avgMonthlyWeight.toFixed(2);
   document.getElementById("k_avgMonthlyTrips").textContent  = avgMonthlyTrips.toFixed(1);
-  // تجميع حسب المركبة + حفظ السائقين
+// تجميع حسب المركبة + حفظ السائقين
   const byVehicleWeight = {};
   const byVehicleTrips  = {};
-  const vehicleDrivers  = {};
+const vehicleDrivers  = {};
   VIEW.forEach(r => {
     const v = r[COL.vehicle] || "مجهولة";
     const d = r[COL.driver] || "بدون سائق";
@@ -716,67 +722,67 @@ function updateKPIs() {
     if (!vehicleDrivers[v]) vehicleDrivers[v] = new Set();
     vehicleDrivers[v].add(d);
   });
-  // تحديث جدول الملخص
+// تحديث جدول الملخص
   updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers);
 
   // كروت "الأكثر"
   let topVehicleWeight = "-";
-  if (Object.keys(byVehicleWeight).length > 0) {
+if (Object.keys(byVehicleWeight).length > 0) {
     topVehicleWeight = Object.entries(byVehicleWeight).sort((a,b)=> b[1]-a[1])[0][0];
   }
   document.getElementById("k_topVehicleWeight").textContent = topVehicleWeight;
-  let topVehicleTrips = "-";
+let topVehicleTrips = "-";
   if (Object.keys(byVehicleTrips).length > 0) {
     topVehicleTrips = Object.entries(byVehicleTrips).sort((a,b)=> b[1]-a[1])[0][0];
-  }
+}
   document.getElementById("k_topVehicleTrips").textContent = topVehicleTrips;
 
   // اليوم الأعلى وزناً
   const byDate = {};
-  VIEW.forEach(r => {
+VIEW.forEach(r => {
     const d = r[COL.date];
     if (!d) return;
     byDate[d] = (byDate[d] || 0) + toNumber(r[COL.weight]);
   });
-  let topDay = "-";
+let topDay = "-";
   if (Object.keys(byDate).length > 0) {
     topDay = Object.entries(byDate).sort((a,b)=> b[1]-a[1])[0][0];
-  }
+}
   document.getElementById("k_topDay").textContent = topDay;
 
   // ترتيب افتراضي للمخططات: الوزن حسب الوزن (تنازلي)، الرحلات حسب عدد الرحلات (تنازلي)
   let weightEntries = Object.entries(byVehicleWeight).sort((a,b)=> b[1]-a[1]);
-  let tripEntries   = Object.entries(byVehicleTrips).sort((a,b)=> b[1]-a[1]);
+let tripEntries   = Object.entries(byVehicleTrips).sort((a,b)=> b[1]-a[1]);
 
 
   // Apply local filters Vehicle Weight
   let vwQuery=document.getElementById("vwSearch").value.toLowerCase();
   let vwTopN=parseInt(document.getElementById("vwTopN").value||"10");
   weightEntries=weightEntries.filter(e=>e[0].toLowerCase().includes(vwQuery)).slice(0,vwTopN);
-  // Apply local filters Vehicle Trips
+// Apply local filters Vehicle Trips
   let vtQuery=document.getElementById("vtSearch").value.toLowerCase();
   let vtTopN=parseInt(document.getElementById("vtTopN").value||"10");
   tripEntries=tripEntries.filter(e=>e[0].toLowerCase().includes(vtQuery)).slice(0,vtTopN);
 
   const labelsWeight = weightEntries.map(e=>e[0]);
-  const dataWeightTon = weightEntries.map(e=> (e[1]/1000).toFixed(2));
+const dataWeightTon = weightEntries.map(e=> (e[1]/1000).toFixed(2));
 
   const labelsTrips = tripEntries.map(e=>{
     const v = e[0];
     const drivers = Array.from(vehicleDrivers[v]||[]).join(", ");
     return v + " – " + drivers;
   });
-  const dataTrips = tripEntries.map(e=> e[1]);
+const dataTrips = tripEntries.map(e=> e[1]);
 
   // إظهار/إخفاء الشارتات (لو مركبة واحدة فقط)
   document.getElementById("chartWeightBox").style.display = labelsWeight.length > 1 ?
-  "block" : "none";
+"block" : "none";
   document.getElementById("chartTripsBox").style.display  = labelsTrips.length  > 1 ? "block" : "none";
-  // Bar: وزن
+// Bar: وزن
   if (labelsWeight.length > 1) {
     if (vehicleWeightChart) vehicleWeightChart.destroy();
     const ctx1 = document.getElementById("vehicleWeightChart").getContext("2d");
-    vehicleWeightChart = new Chart(ctx1, {
+vehicleWeightChart = new Chart(ctx1, {
       type: 'bar',
       data: {
         labels: labelsWeight,
@@ -787,7 +793,8 @@ function updateKPIs() {
         }]
       },
       options: {
-        responsive: true,
+        
+responsive: true,
         plugins: { legend: { display: false }, tooltip: { callbacks: {
           label: (ctx)=> ` ${ctx.parsed.y} طن`
         }}},
@@ -795,14 +802,15 @@ function updateKPIs() {
           x: { title: { display: true, text: "المركبة" } },
           y: { title: { display: true, text: "الوزن (طن)" } }
         }
-      }
+   
+    }
     });
   }
 
   // Pie: رحلات + نسب مئوية + ملصق المركبة – السائقين
   if (labelsTrips.length > 1) {
     if (vehicleTripsChart) vehicleTripsChart.destroy();
-    const ctx2 = document.getElementById("vehicleTripsChart").getContext("2d");
+const ctx2 = document.getElementById("vehicleTripsChart").getContext("2d");
     vehicleTripsChart = new Chart(ctx2, {
       type: 'pie',
       data: {
@@ -813,6 +821,7 @@ function updateKPIs() {
           backgroundColor: [
             "#3b82f6","#10b981","#f59e0b","#ef4444",
             "#8b5cf6","#06b6d4","#84cc16","#d946ef",
+  
             "#fb7185","#22c55e","#a78bfa"
           ]
         }]
@@ -829,19 +838,20 @@ function updateKPIs() {
               return ` ${ctx.label}: ${v} رحلة (${pct}%)`;
             }
           }},
-          datalabels: {
+   
+        datalabels: {
             color: '#fff',
             formatter: (value, ctx) => {
               const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
               const percentage = sum ?
-              (value * 100 / sum).toFixed(1) + "%" : "0%";
+(value * 100 / sum).toFixed(1) + "%" : "0%";
               return percentage;
-            }
+}
           }
         }
       }
     });
-  }
+}
 
   // أخيراً: حدّث السلاسل الزمنية
   updateTimeSeriesChart();
@@ -853,12 +863,12 @@ function updateTable() {
   const tb = document.getElementById("tbody");
   const empty = document.getElementById("emptyState");
   tb.innerHTML = "";
-  if (VIEW.length === 0) {
+if (VIEW.length === 0) {
     empty.classList.remove("hidden");
     return;
   }
   empty.classList.add("hidden");
-  VIEW.forEach(r => {
+VIEW.forEach(r => {
     const tr = document.createElement("tr");
     tr.className = "border-b hover:bg-gray-50";
     tr.innerHTML = `
@@ -876,7 +886,7 @@ function updateTable() {
 function fillMonthSelect() {
   const sel = document.getElementById("monthSelect");
   const months = Array.from(new Set(ALL.map(r => r[COL.month]).filter(Boolean)));
-  months.forEach(m => {
+months.forEach(m => {
     const opt = document.createElement("option");
     opt.value = opt.textContent = m;
     sel.appendChild(opt);
@@ -885,7 +895,7 @@ function fillMonthSelect() {
 function fillVehicleSelect() {
   const sel = document.getElementById("vehicleSelect");
   const vehicles = Array.from(new Set(ALL.map(r => r[COL.vehicle]).filter(Boolean)));
-  vehicles.forEach(v => {
+vehicles.forEach(v => {
     const opt = document.createElement("option");
     opt.value = opt.textContent = v;
     sel.appendChild(opt);
@@ -912,7 +922,7 @@ async function loadData() {
         error: reject
       });
     });
-    ALL = result.data.map(row => {
+ALL = result.data.map(row => {
       const obj = {};
       Object.keys(row).forEach(k => {
         const kk = (k || "").trim();
@@ -920,13 +930,13 @@ async function loadData() {
       });
       return obj;
     });
-    fillMonthSelect();
+fillMonthSelect();
     fillVehicleSelect();
     render();
   } catch (e) {
     console.error("خطأ في جلب/قراءة الشيت:", e);
     alert("تعذر تحميل البيانات من الشيت.");
-  }
+}
 }
 
 /* ===== Events ===== */
@@ -954,7 +964,6 @@ document.getElementById('vtSearch').addEventListener('input',render);
 document.getElementById('vtTopN').addEventListener('input',render);
 document.getElementById('vsSearch').addEventListener('input',render);
 document.getElementById('vsSort').addEventListener('change',render);
-
 // Event listener for new sorting filter
 document.getElementById('vaSearch').addEventListener('input',render);
 document.getElementById('vaYear').addEventListener('input',render);
