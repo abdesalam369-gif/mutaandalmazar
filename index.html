@@ -84,12 +84,18 @@
         <h3 id="k_topDay" class="text-xl font-bold text-pink-600">-</h3>
       </div>
       <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-gray-500">متوسط الوزن اليومي</p>
-        <h3 id="k_avgDailyWeight" class="text-2xl font-bold text-blue-600">0</h3>
+        <p class="text-gray-500">متوسط يومي</p>
+        <div class="mt-1 space-y-1 text-sm">
+          <div>الوزن: <span id="k_avgDailyWeight" class="font-bold text-blue-600">0</span> طن/يوم</div>
+          <div>الرحلات: <span id="k_avgDailyTrips" class="font-bold text-blue-600">0</span> رحلة/يوم</div>
+        </div>
       </div>
       <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-gray-500">متوسط الوزن الشهري</p>
-        <h3 id="k_avgMonthlyWeight" class="text-2xl font-bold text-blue-600">0</h3>
+        <p class="text-gray-500">متوسط شهري</p>
+        <div class="mt-1 space-y-1 text-sm">
+          <div>الوزن: <span id="k_avgMonthlyWeight" class="font-bold text-blue-600">0</span> طن/شهر</div>
+          <div>الرحلات: <span id="k_avgMonthlyTrips" class="font-bold text-blue-600">0</span> رحلة/شهر</div>
+        </div>
       </div>
     </div>
 
@@ -689,7 +695,8 @@ document.getElementById("k_avg").textContent    = formatTonFromKg(avgWkg) + " ط
 // متوسطات يومية/شهرية
   const uniqueDays = new Set(VIEW.map(r => r[COL.date]).filter(Boolean));
   const daysCount = uniqueDays.size;
-  const avgDailyWeight = daysCount ? (totalWkg / 1000) / daysCount : 0;
+  const avgDailyWeight = daysCount ?
+(totalWkg/1000) / daysCount : 0;
   const avgDailyTrips = daysCount ? trips / daysCount : 0;
 
   const monthKeys = new Set();
@@ -703,7 +710,7 @@ VIEW.forEach(r => {
     if (key) monthKeys.add(key);
   });
 const monthsCount = monthKeys.size;
-  const avgMonthlyWeight = monthsCount ? (totalWkg / 1000) / monthsCount : 0;
+  const avgMonthlyWeight = monthsCount ? (totalWkg/1000) / monthsCount : 0;
   const avgMonthlyTrips = monthsCount ?
 trips / monthsCount : 0;
 
