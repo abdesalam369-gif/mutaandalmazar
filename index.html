@@ -695,8 +695,7 @@ document.getElementById("k_avg").textContent    = formatTonFromKg(avgWkg) + " ط
 // متوسطات يومية/شهرية
   const uniqueDays = new Set(VIEW.map(r => r[COL.date]).filter(Boolean));
   const daysCount = uniqueDays.size;
-  const avgDailyWeight = daysCount ?
-(totalWkg/1000) / daysCount : 0;
+  const avgDailyWeight = daysCount ? (totalWkg / 1000) / daysCount : 0;
   const avgDailyTrips = daysCount ? trips / daysCount : 0;
 
   const monthKeys = new Set();
@@ -710,7 +709,7 @@ VIEW.forEach(r => {
     if (key) monthKeys.add(key);
   });
 const monthsCount = monthKeys.size;
-  const avgMonthlyWeight = monthsCount ? (totalWkg/1000) / monthsCount : 0;
+  const avgMonthlyWeight = monthsCount ? (totalWkg / 1000) / monthsCount : 0;
   const avgMonthlyTrips = monthsCount ?
 trips / monthsCount : 0;
 
