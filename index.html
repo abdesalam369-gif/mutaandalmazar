@@ -525,6 +525,10 @@ const arabicMonthMap = {
   "Jan": "01", "Feb": "02", "Mar": "03", "Apr": "04", "May": "05", "Jun": "06",
   "Jul": "07", "Aug": "08", "Sep": "09", "Oct": "10", "Nov": "11", "Dec": "12"
 };
+const monthNumberToName = {
+  "01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr", "05": "May", "06": "Jun",
+  "07": "Jul", "08": "Aug", "09": "Sep", "10": "Oct", "11": "Nov", "12": "Dec"
+};
 function toYM(dt) {
   const y = dt.getFullYear();
   const m = String(dt.getMonth()+1).padStart(2,'0');
@@ -613,10 +617,14 @@ function computeTimeSeries(agg, metric) {
       if (isNaN(dt)) return;
       key = toYMD(dt);
     } else { // 'month'
-      const month = String(r[COL.month] || "").trim();
-      const year = "2025"; // سنة ثابتة للفرز
+      let month = String(r[COL.month] || "").trim();
+      if(month){
+        // تحويل الحرف الأول إلى كبير لضمان المطابقة
+        month = month.charAt(0).toUpperCase() + month.slice(1).toLowerCase();
+      }
+      const year = "2025";
       const monthNumber = arabicMonthMap[month];
-      if (!monthNumber) return; // تجاهل الشهور غير الصالحة
+      if (!monthNumber) return;
       key = `${year}-${monthNumber}`;
     }
 
@@ -629,12 +637,12 @@ function computeTimeSeries(agg, metric) {
   });
 
   let labels = Object.keys(map);
-  labels.sort(); // الفرز الأبجدي للمفاتيح يضمن الترتيب الزمني
+  labels.sort();
 
   const displayLabels = labels.map(key => {
     const monthNumber = key.substring(5);
-    const monthName = Object.keys(arabicMonthMap).find(name => arabicMonthMap[name] === monthNumber);
-    return monthName || key;
+    // استخدام الخريطة الجديدة للتحويل إلى أسماء إنجليزية
+    return monthNumberToName[monthNumber] || key;
   });
   
   const values = labels.map(k => +map[k].toFixed(2));
