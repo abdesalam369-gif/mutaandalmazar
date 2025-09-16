@@ -610,8 +610,7 @@ function computeTimeSeries(agg, metric) {
     } else {
       // شهري: الأفضل من التاريخ، وإن لم يوجد فاستعمل حقل الشهر
       if (r[COL.date]) {
-        const dt 
-= new Date(r[COL.date]);
+        const dt = new Date(r[COL.date]);
         if (!isNaN(dt)) key = toYM(dt);
       }
       if (!key && r[COL.month]) key = String(r[COL.month]).trim();
@@ -825,8 +824,7 @@ function updateKPIs() {
         plugins: {
           legend: { position: 'right' },
           tooltip: { callbacks: {
-            label: (ctx)
- => {
+            label: (ctx) => {
               const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
               const v = ctx.parsed;
               const pct = total ? (v*100/total).toFixed(1) : 0;
