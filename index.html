@@ -404,8 +404,11 @@ function updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers) {
 }
 
 /* ===== Time Series ===== */
+
 function computeTimeSeries(agg, metric) {
   const map = {};
+  const MONTH_ORDER = ["jan","feb","mar","apr","may","jun","july","aug","sep","oct","nov","dec"];
+
   VIEW.forEach(r => {
     let key = null;
     if (agg === 'day') {
@@ -414,12 +417,10 @@ function computeTimeSeries(agg, metric) {
       if (isNaN(dt)) return;
       key = toYMD(dt);
     } else {
-      if (r[COL.date]) {
-        const dt = new Date(r[COL.date]);
-        if (!isNaN(dt)) key = toYM(dt);
-      }
-      if (!key && r[COL.month]) key = String(r[COL.month]).trim();
-      if (!key) return;
+      // شهري: استخدم فقط خانة الشهر
+      if (!r[COL.month]) return;
+      key = String(r[COL.month]).trim().toLowerCase();
+      if (!MONTH_ORDER.includes(key)) return;
     }
 
     if (!(key in map)) map[key] = 0;
@@ -429,15 +430,17 @@ function computeTimeSeries(agg, metric) {
 
   let labels = Object.keys(map);
   if (labels.length === 0) return { labels: [], values: [] };
-  if (agg === 'day') labels.sort((a,b)=> new Date(a) - new Date(b));
-  else {
-    const ymmm = labels.every(k=> /^\d{4}-\d{2}$/.test(k));
-    if (ymmm) labels.sort((a,b)=> a.localeCompare(b));
+
+  if (agg === 'day') {
+    labels.sort((a,b)=> new Date(a) - new Date(b));
+  } else {
+    labels.sort((a,b)=> MONTH_ORDER.indexOf(a) - MONTH_ORDER.indexOf(b));
   }
 
   const values = labels.map(k => +map[k].toFixed(2));
   return { labels, values };
 }
+
 function updateTimeSeriesChart() {
   const agg = document.getElementById('tsAgg').value;
   const metric = document.getElementById('tsMetric').value;
