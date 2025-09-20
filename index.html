@@ -166,6 +166,7 @@
           <thead class="bg-gray-100">
             <tr>
               <th class="px-4 py-2">رقم المركبة</th>
+              <th class="px-4 py-2">السائق</th>
               <th class="px-4 py-2">سنة التصنيع</th>
               <th class="px-4 py-2">السعة (م³)</th>
               <th class="px-4 py-2">السعة النظرية (طن)</th>
@@ -772,6 +773,16 @@ function renderVehAnalysis(){
   if(!tb) return;
   tb.innerHTML="";
   if(VEHICLES.length===0||VIEW.length===0) return;
+  
+  // تجميع السائقين لكل مركبة
+  const vehicleDrivers  = {};
+  VIEW.forEach(r => {
+    const v = r[COL.vehicle] || "مجهولة";
+    const d = r[COL.driver] || "بدون سائق";
+    if (!vehicleDrivers[v]) vehicleDrivers[v] = new Set();
+    vehicleDrivers[v].add(d);
+  });
+
   const byVehicleWeight={};
   const byVehicleTrips={};
   VIEW.forEach(r=>{
@@ -779,6 +790,7 @@ function renderVehAnalysis(){
     byVehicleWeight[v]=(byVehicleWeight[v]||0)+toNumber(r[COL.weight]);
     byVehicleTrips[v]=(byVehicleTrips[v]||0)+1;
   });
+
   const vaQuery=document.getElementById("vaSearch").value.toLowerCase();
   const vaYearFilter=parseInt(document.getElementById("vaYear").value||"0");
   const vaSort=document.getElementById("vaSort").value;
@@ -787,8 +799,9 @@ function renderVehAnalysis(){
   VEHICLES.forEach(vh => {
     const vnum = String(vh["رقم المركبة"]||"");
     const year = parseInt(vh["سنة التصنيع"] || "0");
+    const drivers = Array.from(vehicleDrivers[vnum]||[]).join(', ');
 
-    if (vaQuery && !vnum.toLowerCase().includes(vaQuery)) return;
+    if (vaQuery && !vnum.toLowerCase().includes(vaQuery) && !drivers.toLowerCase().includes(vaQuery)) return;
     if (vaYearFilter && year < vaYearFilter) return;
 
     const capM3 = toNumber(vh["سعة المركبة بالمتر المكعب"]);
@@ -799,7 +812,7 @@ function renderVehAnalysis(){
     const wton = wkg / 1000;
     const eff = (trips > 0 && capTon > 0) ? (wton / (trips * capTon)) * 100 : 0;
 
-    vehicleData.push({ vnum, year, capM3, capTon, trips, wton, eff });
+    vehicleData.push({ vnum, drivers, year, capM3, capTon, trips, wton, eff });
   });
   vehicleData.sort((a, b) => {
     if (vaSort === "year") return b.year - a.year;
@@ -811,6 +824,7 @@ function renderVehAnalysis(){
     tr.className = "border-b hover:bg-gray-50";
     tr.innerHTML = `
       <td class="px-4 py-2">${row.vnum}</td>
+      <td class="px-4 py-2">${row.drivers}</td>
       <td class="px-4 py-2">${row.year || "-"}</td>
       <td class="px-4 py-2">${row.capM3.toFixed(1)}</td>
       <td class="px-4 py-2">${row.capTon.toFixed(2)}</td>
