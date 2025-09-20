@@ -275,13 +275,13 @@ const VEH_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1
 let ALL = [];
 let VIEW = [];
 let VEHICLES = [];
+let vehicleAggregates = {}; // Added to hold trip/weight data per vehicle
 let vehicleWeightChart = null;
 let vehicleTripsChart  = null;
 let timeSeriesChart    = null;
 let driverChart        = null;
 
 /* تحميل/تعطيل */
-let dataLoaded = false, vehiclesLoaded = false;
 const controlsSelector = 'input, select, button';
 function setLoading(state) {
   const overlay = document.getElementById('loadingOverlay');
@@ -290,9 +290,6 @@ function setLoading(state) {
     if (el.id === 'refreshBtn') return; // اسمح بالتحديث دائماً
     el.disabled = state;
   });
-}
-function maybeHideOverlay() {
-  if (dataLoaded && vehiclesLoaded) setLoading(false);
 }
 
 /* أدوات مساعدة */
@@ -327,13 +324,12 @@ function getMultiValues(sel) {
 /* ===== فلترة ===== */
 function applyFilters() {
   const q = document.getElementById("q").value.trim().toLowerCase();
-
   const mSel = document.getElementById("monthSelect");
   const vSel = document.getElementById("vehicleSelect");
   const months = getMultiValues(mSel);
   const vehicles = getMultiValues(vSel);
-
   const d = document.getElementById("dateExact").value;
+  
   VIEW = ALL.filter(r => {
     const recMonth = String(r[COL.month] || "").trim();
     const recVeh   = String(r[COL.vehicle] || "").trim();
@@ -356,6 +352,19 @@ function applyFilters() {
     const hay = [r[COL.month], r[COL.date], r[COL.driver], r[COL.weight], r[COL.vehicle]]
       .map(x => (x==null?"":String(x))).join(" ").toLowerCase();
     return hay.includes(q);
+  });
+
+  // Recalculate vehicleAggregates on filter
+  vehicleAggregates = {};
+  VIEW.forEach(t => {
+    const vehId = t[COL.vehicle];
+    if (vehId) {
+      if (!vehicleAggregates[vehId]) {
+        vehicleAggregates[vehId] = { trips: 0, weightTon: 0 };
+      }
+      vehicleAggregates[vehId].trips += 1;
+      vehicleAggregates[vehId].weightTon += toNumber(t[COL.weight]) / 1000;
+    }
   });
 }
 
@@ -394,7 +403,6 @@ function updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers) {
 }
 
 /* ===== Time Series ===== */
-
 function computeTimeSeries(agg, metric) {
   const map = {};
   const MONTH_ORDER = ["jan","feb","mar","apr","may","jun","july","aug","sep","oct","nov","dec"];
@@ -669,27 +677,26 @@ function updateDriverViews() {
   updateDriverTable();
 }
 /* ===== تحميل الشيتات ===== */
-async function loadVehSheet(){
-  try{
-    const result=await new Promise((resolve,reject)=>{
-      Papa.parse(VEH_URL,{download:true,header:true,skipEmptyLines:true,complete:resolve,error:reject});
+async function fetchSheet(url) {
+  return new Promise((resolve, reject) => {
+    Papa.parse(url, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: result => resolve(result.data),
+      error: error => reject(error)
     });
-    VEHICLES=result.data;
-    vehiclesLoaded = true;
-    maybeHideOverlay();
-    renderVehAnalysis();
-  }catch(e){
-    console.error("خطأ تحميل شيت المركبات:",e);
-    vehiclesLoaded = true; // لا توقف الواجهة
-    maybeHideOverlay();
-  }
+  });
 }
-async function loadData() {
-  try {
-    const result = await new Promise((resolve, reject) => {
-      Papa.parse(CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: resolve, error: reject });
-    });
-    ALL = result.data.map(row => {
+
+function startApp() {
+  setLoading(true);
+  Promise.all([
+    fetchSheet(CSV_URL),
+    fetchSheet(VEH_URL)
+  ])
+  .then(([allData, vehData]) => {
+    ALL = allData.map(row => {
       const obj = {};
       Object.keys(row).forEach(k => {
         const kk = (k || "").trim();
@@ -697,19 +704,21 @@ async function loadData() {
       });
       return obj;
     });
-    dataLoaded = true;
-    maybeHideOverlay();
+    VEHICLES = vehData;
+    
     fillMonthSelect();
     fillVehicleSelect();
     currentPage = 1; // reset pagination
     render();
-  } catch (e) {
-    console.error("خطأ في جلب/قراءة الشيت:", e);
-    dataLoaded = true;
-    maybeHideOverlay();
-    alert("تعذر تحميل البيانات من الشيت.");
-  }
+    setLoading(false);
+  })
+  .catch(e => {
+    console.error("Error loading data:", e);
+    alert("تعذر تحميل البيانات. يرجى التأكد من أن روابط جوجل شيت تعمل بشكل صحيح.");
+    setLoading(false);
+  });
 }
+
 /* ===== تعبئة القوائم المتعددة ===== */
 function fillMonthSelect() {
   const sel = document.getElementById("monthSelect");
@@ -740,39 +749,25 @@ function renderVehAnalysis(){
   const vaSort=document.getElementById("vaSort")?.value || "eff";
   const vaYear=parseInt(document.getElementById("vaYear")?.value || "0");
   const vaSearch=document.getElementById("vaSearch")?.value?.toLowerCase() || "";
-
-  // Group trips by vehicle from VIEW data
-  const vehicleAggregates = {};
-  VIEW.forEach(t => {
-    const vehId = t[COL.vehicle];
-    if (vehId) {
-      if (!vehicleAggregates[vehId]) {
-        vehicleAggregates[vehId] = { trips: 0, weightTon: 0 };
-      }
-      vehicleAggregates[vehId].trips += 1;
-      vehicleAggregates[vehId].weightTon += toNumber(t[COL.weight]) / 1000;
-    }
-  });
-
+  
   // Calculate costs (assumptions from previous steps)
   const fuelPricePerLiter = 0.94; // دينار أردني
   const maintenanceCostPerKm = 0.15; // دينار أردني
-  
-  // This is a placeholder; needs to be a real value from data
-  // Let's assume a fixed average distance per trip for now, as we don't have it
-  // Assume a fixed average distance for the purpose of the cost calculation.
   const averageKmPerTrip = 10;
   const fuelConsumptionLitersPer100Km = 30; // 30 لتر لكل 100 كم
-  const vehicleDistance = (vehicleId) => (vehicleAggregates[vehicleId]?.trips || 0) * averageKmPerTrip;
-
+  
   let analysis = VEHICLES.map(v => {
-    const trips = vehicleAggregates[v['رقم المركبة']]?.trips || 0;
-    const weightTon = vehicleAggregates[v['رقم المركبة']]?.weightTon || 0;
-    const eff = v['السعة النظرية'] ? (weightTon / toNumber(v['السعة النظرية']) / trips) * 100 : 0;
-    const dist = vehicleDistance(v['رقم المركبة']);
+    const vehId = v['رقم المركبة'];
+    const trips = vehicleAggregates[vehId]?.trips || 0;
+    const weightTon = vehicleAggregates[vehId]?.weightTon || 0;
+    
+    const eff = (toNumber(v['السعة النظرية']) > 0 && trips > 0) ? (weightTon / toNumber(v['السعة النظرية']) / trips) * 100 : 0;
+    
+    const dist = trips * averageKmPerTrip;
     const fuelCost = (dist / 100) * fuelConsumptionLitersPer100Km * fuelPricePerLiter;
     const maintenanceCost = dist * maintenanceCostPerKm;
     const totalCost = fuelCost + maintenanceCost;
+    
     const costPerTrip = trips ? totalCost / trips : 0;
     const costPerTon = weightTon ? totalCost / weightTon : 0;
     
@@ -817,37 +812,6 @@ function renderVehAnalysis(){
     tb.appendChild(tr);
   });
 }
-/* ===== تصدير CSV (تحليل المركبات) ===== */
-function exportVehAnalysisToCSV(){
-  let analysis = VEHICLES.map(v => {
-    const trips = vehicleAggregates[v['رقم المركبة']]?.trips || 0;
-    const weightTon = vehicleAggregates[v['رقم المركبة']]?.weightTon || 0;
-    const eff = v['السعة النظرية'] ? (weightTon / toNumber(v['السعة النظرية']) / trips) * 100 : 0;
-    return {
-      'رقم المركبة': v['رقم المركبة'],
-      'سنة التصنيع': toNumber(v['سنة الصنع']),
-      'السعة (م³)' : toNumber(v['السعة (م³)']),
-      'السعة النظرية (طن)': toNumber(v['السعة النظرية']),
-      'عدد الرحلات': trips,
-      'الوزن المنقول (طن)': weightTon,
-      'نسبة الاستغلال %': eff.toFixed(2),
-      'تكلفة الرحلة': (trips ? totalCost / trips : 0).toFixed(2),
-      'تكلفة الطن': (weightTon ? totalCost / weightTon : 0).toFixed(2),
-    };
-  });
-  const headers = Object.keys(analysis[0]).join(',');
-  const csv = [
-    headers,
-    ...analysis.map(row => Object.values(row).map(v=>`"${v}"`).join(','))
-  ].join('\n');
-  const blob = new Blob(["\uFEFF"+csv], {type: "text/csv;charset=utf-8"});
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "تحليل_المركبات.csv";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
 /* ===== تصدير CSV (سجل الرحلات) ===== */
 function exportAllToCSV(){
   const headers = Object.keys(ALL[0]).join(',');
@@ -869,7 +833,7 @@ function exportToXLSX() {
   const vehData = VEHICLES.map(v => {
     const trips = vehicleAggregates[v['رقم المركبة']]?.trips || 0;
     const weightTon = vehicleAggregates[v['رقم المركبة']]?.weightTon || 0;
-    const eff = v['السعة النظرية'] ? (weightTon / toNumber(v['السعة النظرية']) / trips) * 100 : 0;
+    const eff = (toNumber(v['السعة النظرية']) > 0 && trips > 0) ? (weightTon / toNumber(v['السعة النظرية']) / trips) * 100 : 0;
     return {
       'رقم المركبة': v['رقم المركبة'],
       'سنة التصنيع': toNumber(v['سنة الصنع']),
@@ -932,11 +896,7 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   document.getElementById('vehicleSelect').selectedIndex = -1;
   render();
 });
-document.getElementById('refreshBtn').addEventListener('click', () => {
-  setLoading(true);
-  loadData();
-  loadVehSheet();
-});
+document.getElementById('refreshBtn').addEventListener('click', startApp);
 
 document.getElementById('monthSelectAll').addEventListener('click', ()=>{
   document.querySelectorAll('#monthSelect option').forEach(opt=>opt.selected=true);
@@ -994,11 +954,7 @@ function render() {
 if (window.ChartDataLabels) { Chart.register(ChartDataLabels); }
 
 /* ===== Start ===== */
-document.addEventListener("DOMContentLoaded", ()=>{
-  setLoading(true);
-  loadData();
-  loadVehSheet();
-});
+document.addEventListener("DOMContentLoaded", startApp);
 </script>
 </body>
 </html>
