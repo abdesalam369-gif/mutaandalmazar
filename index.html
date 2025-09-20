@@ -15,7 +15,10 @@
     /* تخصيص شريط تمرير بسيط */
     ::-webkit-scrollbar { height: 8px; width: 8px; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
-  </style>
+  
+    .dropdown-menu { display:none; }
+    .dropdown-menu.show { display:block; }
+</style>
 </head>
 <body class="bg-gray-50 text-gray-900">
   <!-- Overlay التحميل -->
@@ -42,25 +45,39 @@
         <input id="q" type="text" placeholder="ابحث بتاريخ أو سائق أو رقم مركبة..." class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
       </div>
 
-      <div>
-        <div class="flex items-center justify-between">
-          <label class="block text-sm mb-1">الشهور (اختيار متعدد)</label>
-          <div class="flex gap-2 text-xs">
-            <button id="monthSelectAll" class="px-2 py-1 rounded border hover:bg-gray-50">تحديد الكل</button>
-            <button id="monthClearAll" class="px-2 py-1 rounded border hover:bg-gray-50">مسح</button>
-          </div>
-        </div>
+      
+<div>
+  <div class="flex items-center justify-between">
+    <label class="block text-sm mb-1">الشهور (اختيار متعدد)</label>
+    <div class="flex gap-2 text-xs">
+      <button id="monthSelectAll" class="px-2 py-1 rounded border hover:bg-gray-50">تحديد الكل</button>
+      <button id="monthClearAll" class="px-2 py-1 rounded border hover:bg-gray-50">مسح</button>
+    </div>
+  </div>
+  <div class="relative">
+    <button id="monthDropdownBtn" class="w-full border rounded-lg px-3 py-2 text-left">اختر الشهور</button>
+    <div id="monthDropdown" class="dropdown-menu absolute mt-1 bg-white border rounded-lg shadow z-10 max-h-60 overflow-auto w-full"></div>
+  </div>
+</div>
+
         <select id="monthSelect" multiple size="6" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"></select>
       </div>
 
-      <div>
-        <div class="flex items-center justify-between">
-          <label class="block text-sm mb-1">أرقام المركبات (اختيار متعدد)</label>
-          <div class="flex gap-2 text-xs">
-            <button id="vehSelectAll" class="px-2 py-1 rounded border hover:bg-gray-50">تحديد الكل</button>
-            <button id="vehClearAll" class="px-2 py-1 rounded border hover:bg-gray-50">مسح</button>
-          </div>
-        </div>
+      
+<div>
+  <div class="flex items-center justify-between">
+    <label class="block text-sm mb-1">أرقام المركبات (اختيار متعدد)</label>
+    <div class="flex gap-2 text-xs">
+      <button id="vehSelectAll" class="px-2 py-1 rounded border hover:bg-gray-50">تحديد الكل</button>
+      <button id="vehClearAll" class="px-2 py-1 rounded border hover:bg-gray-50">مسح</button>
+    </div>
+  </div>
+  <div class="relative">
+    <button id="vehDropdownBtn" class="w-full border rounded-lg px-3 py-2 text-left">اختر المركبات</button>
+    <div id="vehDropdown" class="dropdown-menu absolute mt-1 bg-white border rounded-lg shadow z-10 max-h-60 overflow-auto w-full"></div>
+  </div>
+</div>
+
         <select id="vehicleSelect" multiple size="6" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"></select>
       </div>
 
@@ -339,8 +356,8 @@ function applyFilters() {
 
   const mSel = document.getElementById("monthSelect");
   const vSel = document.getElementById("vehicleSelect");
-  const months = getMultiValues(mSel);
-  const vehicles = getMultiValues(vSel);
+  const months = getSelectedMonths();
+  const vehicles = getSelectedVehicles();
 
   const d = document.getElementById("dateExact").value;
 
@@ -1003,6 +1020,59 @@ function render() {
 
 /* تسجيل بلجن الداتا ليبلز */
 if (window.ChartDataLabels) { Chart.register(ChartDataLabels); }
+
+
+function fillMonthSelect() {
+  const container = document.getElementById("monthDropdown");
+  container.innerHTML = "";
+  const months = Array.from(new Set(ALL.map(r => r[COL.month]).filter(Boolean)));
+  months.forEach(m => {
+    const div = document.createElement("div");
+    div.className = "px-3 py-1 hover:bg-gray-100 flex items-center gap-2";
+    div.innerHTML = `<input type="checkbox" value="${m}" class="monthCheck"> ${m}`;
+    container.appendChild(div);
+  });
+  container.querySelectorAll(".monthCheck").forEach(cb => {
+    cb.addEventListener("change", ()=>{ currentPage=1; render(); });
+  });
+}
+function fillVehicleSelect() {
+  const container = document.getElementById("vehDropdown");
+  container.innerHTML = "";
+  const vehicles = Array.from(new Set(ALL.map(r => r[COL.vehicle]).filter(Boolean)));
+  vehicles.forEach(v => {
+    const div = document.createElement("div");
+    div.className = "px-3 py-1 hover:bg-gray-100 flex items-center gap-2";
+    div.innerHTML = `<input type="checkbox" value="${v}" class="vehCheck"> ${v}`;
+    container.appendChild(div);
+  });
+  container.querySelectorAll(".vehCheck").forEach(cb => {
+    cb.addEventListener("change", ()=>{ currentPage=1; render(); });
+  });
+}
+function getSelectedMonths(){ return Array.from(document.querySelectorAll(".monthCheck:checked")).map(cb => cb.value); }
+function getSelectedVehicles(){ return Array.from(document.querySelectorAll(".vehCheck:checked")).map(cb => cb.value); }
+
+// تحديث الفلاتر
+document.getElementById("monthSelectAll").addEventListener("click", ()=>{
+  document.querySelectorAll(".monthCheck").forEach(cb=>cb.checked=true); render();
+});
+document.getElementById("monthClearAll").addEventListener("click", ()=>{
+  document.querySelectorAll(".monthCheck").forEach(cb=>cb.checked=false); render();
+});
+document.getElementById("vehSelectAll").addEventListener("click", ()=>{
+  document.querySelectorAll(".vehCheck").forEach(cb=>cb.checked=true); render();
+});
+document.getElementById("vehClearAll").addEventListener("click", ()=>{
+  document.querySelectorAll(".vehCheck").forEach(cb=>cb.checked=false); render();
+});
+
+document.getElementById("monthDropdownBtn").addEventListener("click", ()=>{
+  document.getElementById("monthDropdown").classList.toggle("show");
+});
+document.getElementById("vehDropdownBtn").addEventListener("click", ()=>{
+  document.getElementById("vehDropdown").classList.toggle("show");
+});
 
 /* ===== Start ===== */
 document.addEventListener("DOMContentLoaded", ()=>{
