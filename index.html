@@ -48,7 +48,11 @@
             <button id="monthClearAll" class="px-2 py-1 rounded border hover:bg-gray-50">مسح</button>
           </div>
         </div>
-        <select id="monthSelect" multiple size="6" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"></select>
+        <div class="relative">
+          <button id="monthDropdownBtn" class="w-full text-right border rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300">اختر الشهور...</button>
+          <div id="monthDropdownMenu" class="absolute hidden top-full left-0 z-10 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto mt-1">
+            </div>
+        </div>
       </div>
 
       <div>
@@ -59,7 +63,11 @@
             <button id="vehClearAll" class="px-2 py-1 rounded border hover:bg-gray-50">مسح</button>
           </div>
         </div>
-        <select id="vehicleSelect" multiple size="6" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"></select>
+        <div class="relative">
+          <button id="vehicleDropdownBtn" class="w-full text-right border rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300">اختر المركبات...</button>
+          <div id="vehicleDropdownMenu" class="absolute hidden top-full left-0 z-10 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto mt-1">
+            </div>
+        </div>
       </div>
 
       <div>
@@ -149,8 +157,6 @@
             <option value="eff">نسبة الاستغلال</option>
             <option value="year">سنة التصنيع</option>
             <option value="capTon">السعة النظرية</option>
-            <option value="costTrip">تكلفة الرحلة</option>
-            <option value="costTon">تكلفة الطن</option>
           </select>
         </div>
         <h3 class="font-semibold">تحليل كفاءة المركبات</h3>
@@ -160,14 +166,15 @@
           <thead class="bg-gray-100">
             <tr>
               <th class="px-4 py-2">رقم المركبة</th>
+              <th class="px-4 py-2">السائق</th>
               <th class="px-4 py-2">سنة التصنيع</th>
               <th class="px-4 py-2">السعة (م³)</th>
               <th class="px-4 py-2">السعة النظرية (طن)</th>
               <th class="px-4 py-2">عدد الرحلات</th>
               <th class="px-4 py-2">الوزن المنقول (طن)</th>
               <th class="px-4 py-2">نسبة الاستغلال %</th>
-              <th class="px-4 py-2">تكلفة الرحلة</th>
-              <th class="px-4 py-2">تكلفة الطن</th>
+              <th class="px-4 py-2">كلفة الوقود</th>
+              <th class="px-4 py-2">كلفة الصيانة</th>
             </tr>
           </thead>
           <tbody id="vehAnalysisTable"></tbody>
@@ -271,17 +278,22 @@ const COL = {
 /* ===== روابط الشيتات ===== */
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=0&single=true&output=csv";
 const VEH_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=2001178330&single=true&output=csv";
+const FUEL_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=1380959426&single=true&output=csv";
+const MAINTENANCE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=2095309457&single=true&output=csv";
+
 /* ===== متغيرات عامة ===== */
 let ALL = [];
 let VIEW = [];
 let VEHICLES = [];
-let vehicleAggregates = {}; // Added to hold trip/weight data per vehicle
+let FUEL = [];
+let MAINTENANCE = [];
 let vehicleWeightChart = null;
 let vehicleTripsChart  = null;
 let timeSeriesChart    = null;
 let driverChart        = null;
 
 /* تحميل/تعطيل */
+let dataLoaded = false, vehiclesLoaded = false, fuelLoaded = false, maintenanceLoaded = false;
 const controlsSelector = 'input, select, button';
 function setLoading(state) {
   const overlay = document.getElementById('loadingOverlay');
@@ -290,6 +302,9 @@ function setLoading(state) {
     if (el.id === 'refreshBtn') return; // اسمح بالتحديث دائماً
     el.disabled = state;
   });
+}
+function maybeHideOverlay() {
+  if (dataLoaded && vehiclesLoaded && fuelLoaded && maintenanceLoaded) setLoading(false);
 }
 
 /* أدوات مساعدة */
@@ -317,19 +332,18 @@ function toYM(dt) {
   const m = String(dt.getMonth()+1).padStart(2,'0');
   return `${y}-${m}`;
 }
-function getMultiValues(sel) {
-  return Array.from(sel.selectedOptions || []).map(o => String(o.value).trim()).filter(Boolean);
-}
 
 /* ===== فلترة ===== */
 function applyFilters() {
   const q = document.getElementById("q").value.trim().toLowerCase();
-  const mSel = document.getElementById("monthSelect");
-  const vSel = document.getElementById("vehicleSelect");
-  const months = getMultiValues(mSel);
-  const vehicles = getMultiValues(vSel);
+
+  const monthCheckboxes = document.querySelectorAll("#monthDropdownMenu input[type='checkbox']");
+  const vehicleCheckboxes = document.querySelectorAll("#vehicleDropdownMenu input[type='checkbox']");
+
+  const months = Array.from(monthCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+  const vehicles = Array.from(vehicleCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+
   const d = document.getElementById("dateExact").value;
-  
   VIEW = ALL.filter(r => {
     const recMonth = String(r[COL.month] || "").trim();
     const recVeh   = String(r[COL.vehicle] || "").trim();
@@ -353,19 +367,6 @@ function applyFilters() {
       .map(x => (x==null?"":String(x))).join(" ").toLowerCase();
     return hay.includes(q);
   });
-
-  // Recalculate vehicleAggregates on filter
-  vehicleAggregates = {};
-  VIEW.forEach(t => {
-    const vehId = t[COL.vehicle];
-    if (vehId) {
-      if (!vehicleAggregates[vehId]) {
-        vehicleAggregates[vehId] = { trips: 0, weightTon: 0 };
-      }
-      vehicleAggregates[vehId].trips += 1;
-      vehicleAggregates[vehId].weightTon += toNumber(t[COL.weight]) / 1000;
-    }
-  });
 }
 
 /* ===== ملخص المركبات ===== */
@@ -382,8 +383,7 @@ function updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers) {
   if(vsQuery){
     summary=summary.filter(r=>r.vehicle.toLowerCase().includes(vsQuery)||r.drivers.join(", ").toLowerCase().includes(vsQuery));
   }
-  if(vsSort==="weight"){ summary.sort((a,b)=>b.weightTon-a.weightTon);
-  }
+  if(vsSort==="weight"){ summary.sort((a,b)=>b.weightTon-a.weightTon); }
   else if(vsSort==="trips"){ summary.sort((a,b)=>b.trips-a.trips); }
 
   const tbody = document.getElementById("vehicleSummary");
@@ -403,6 +403,7 @@ function updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers) {
 }
 
 /* ===== Time Series ===== */
+
 function computeTimeSeries(agg, metric) {
   const map = {};
   const MONTH_ORDER = ["jan","feb","mar","apr","may","jun","july","aug","sep","oct","nov","dec"];
@@ -602,7 +603,7 @@ function updateTable() {
   const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
   if (currentPage > totalPages) currentPage = totalPages;
   const start = (currentPage - 1) * pageSize;
-  const end = Math.min(start + pageSize, totalRows);
+  const end   = Math.min(start + pageSize, totalRows);
   const rows = VIEW.slice(start, end);
   rows.forEach(r => {
     const tr = document.createElement("tr");
@@ -618,6 +619,7 @@ function updateTable() {
   });
   updatePaginationControls(totalPages);
 }
+
 /* ===== تحليل السائقين ===== */
 function getDriverAggregates() {
   const map = {};
@@ -631,13 +633,21 @@ function getDriverAggregates() {
     map[d].weightTon += w;
     map[d].vehicles.add(v);
   });
-  let rows = Object.entries(map).map(([driver, obj]) => ({ driver, trips: obj.trips, weightTon: +obj.weightTon.toFixed(2), avgTon: obj.trips ? +(obj.weightTon / obj.trips).toFixed(2) : 0, vehCount: obj.vehicles.size, vehList: Array.from(obj.vehicles).join(', ') }));
+  let rows = Object.entries(map).map(([driver, obj]) => ({
+    driver,
+    trips: obj.trips,
+    weightTon: +obj.weightTon.toFixed(2),
+    avgTon: obj.trips ? +(obj.weightTon / obj.trips).toFixed(2) : 0,
+    vehCount: obj.vehicles.size,
+    vehList: Array.from(obj.vehicles).join(', ')
+  }));
   const q = document.getElementById('driverSearch').value.toLowerCase();
   if (q) rows = rows.filter(r => r.driver.toLowerCase().includes(q));
   const sortBy = document.getElementById('driverSort').value;
   if (sortBy === 'weight') rows.sort((a,b)=> b.weightTon - a.weightTon);
   else if (sortBy === 'trips') rows.sort((a,b)=> b.trips - a.trips);
   else rows.sort((a,b)=> b.avgTon - a.avgTon);
+
   const topN = Math.max(1, parseInt(document.getElementById('driverTopN').value || '10', 10));
   return rows.slice(0, topN);
 }
@@ -650,8 +660,21 @@ function updateDriverChart() {
   if (driverChart) driverChart.destroy();
   driverChart = new Chart(ctx, {
     type: 'bar',
-    data: { labels, datasets: [ { label: 'رحلات', data: dataTrips, backgroundColor: '#f59e0b', yAxisID: 'y' }, { label: 'وزن (طن)', data: dataWeight, backgroundColor: '#3b82f6', yAxisID: 'y1' } ] },
-    options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { position: 'left', title: {display:true, text:'رحلات'}, beginAtZero: true }, y1: { position: 'right', title: {display:true, text:'طن'}, beginAtZero: true, grid: { drawOnChartArea: false } } } }
+    data: {
+      labels,
+      datasets: [
+        { label: 'رحلات', data: dataTrips, backgroundColor: '#f59e0b', yAxisID: 'y' },
+        { label: 'وزن (طن)', data: dataWeight, backgroundColor: '#3b82f6', yAxisID: 'y1' }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        y:  { position: 'left', title: {display:true, text:'رحلات'}, beginAtZero: true },
+        y1: { position: 'right', title: {display:true, text:'طن'}, beginAtZero: true, grid: { drawOnChartArea: false } }
+      }
+    }
   });
 }
 function updateDriverTable() {
@@ -676,27 +699,60 @@ function updateDriverViews() {
   updateDriverChart();
   updateDriverTable();
 }
-/* ===== تحميل الشيتات ===== */
-async function fetchSheet(url) {
-  return new Promise((resolve, reject) => {
-    Papa.parse(url, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: result => resolve(result.data),
-      error: error => reject(error)
-    });
-  });
-}
 
-function startApp() {
-  setLoading(true);
-  Promise.all([
-    fetchSheet(CSV_URL),
-    fetchSheet(VEH_URL)
-  ])
-  .then(([allData, vehData]) => {
-    ALL = allData.map(row => {
+/* ===== تحميل الشيتات ===== */
+async function loadVehSheet(){
+  try{
+    const result=await new Promise((resolve,reject)=>{
+      Papa.parse(VEH_URL,{download:true,header:true,skipEmptyLines:true,complete:resolve,error:reject});
+    });
+    VEHICLES=result.data;
+    vehiclesLoaded = true;
+    maybeHideOverlay();
+    renderVehAnalysis();
+  }catch(e){
+    console.error("خطأ تحميل شيت المركبات:",e);
+    vehiclesLoaded = true;
+    // لا توقف الواجهة
+    maybeHideOverlay();
+  }
+}
+async function loadFuelSheet(){
+  try{
+    const result=await new Promise((resolve,reject)=>{
+      Papa.parse(FUEL_URL,{download:true,header:true,skipEmptyLines:true,complete:resolve,error:reject});
+    });
+    FUEL=result.data;
+    fuelLoaded = true;
+    maybeHideOverlay();
+    renderVehAnalysis();
+  }catch(e){
+    console.error("خطأ تحميل شيت الوقود:",e);
+    fuelLoaded = true;
+    maybeHideOverlay();
+  }
+}
+async function loadMaintenanceSheet(){
+  try{
+    const result=await new Promise((resolve,reject)=>{
+      Papa.parse(MAINTENANCE_URL,{download:true,header:true,skipEmptyLines:true,complete:resolve,error:reject});
+    });
+    MAINTENANCE=result.data;
+    maintenanceLoaded = true;
+    maybeHideOverlay();
+    renderVehAnalysis();
+  }catch(e){
+    console.error("خطأ تحميل شيت الصيانة:",e);
+    maintenanceLoaded = true;
+    maybeHideOverlay();
+  }
+}
+async function loadData() {
+  try {
+    const result = await new Promise((resolve, reject) => {
+      Papa.parse(CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: resolve, error: reject });
+    });
+    ALL = result.data.map(row => {
       const obj = {};
       Object.keys(row).forEach(k => {
         const kk = (k || "").trim();
@@ -704,243 +760,351 @@ function startApp() {
       });
       return obj;
     });
-    VEHICLES = vehData;
-    
+    dataLoaded = true;
+    maybeHideOverlay();
     fillMonthSelect();
     fillVehicleSelect();
     currentPage = 1; // reset pagination
     render();
-    setLoading(false);
-  })
-  .catch(e => {
-    console.error("Error loading data:", e);
-    alert("تعذر تحميل البيانات. يرجى التأكد من أن روابط جوجل شيت تعمل بشكل صحيح.");
-    setLoading(false);
-  });
+  } catch (e) {
+    console.error("خطأ في جلب/قراءة الشيت:", e);
+    dataLoaded = true;
+    maybeHideOverlay();
+    alert("تعذر تحميل البيانات من الشيت.");
+  }
 }
 
 /* ===== تعبئة القوائم المتعددة ===== */
 function fillMonthSelect() {
-  const sel = document.getElementById("monthSelect");
-  sel.innerHTML = "";
+  const menu = document.getElementById("monthDropdownMenu");
+  menu.innerHTML = "";
   const months = Array.from(new Set(ALL.map(r => r[COL.month]).filter(Boolean)));
   months.forEach(m => {
-    const opt = document.createElement("option");
-    opt.value = opt.textContent = m;
-    sel.appendChild(opt);
+    const div = document.createElement("div");
+    div.className = "px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2";
+    div.innerHTML = `
+      <input type="checkbox" id="month-${m}" value="${m}" class="form-checkbox h-4 w-4 text-blue-600 rounded">
+      <label for="month-${m}" class="text-sm cursor-pointer w-full">${m}</label>
+    `;
+    menu.appendChild(div);
   });
 }
 function fillVehicleSelect() {
-  const sel = document.getElementById("vehicleSelect");
-  sel.innerHTML = "";
+  const menu = document.getElementById("vehicleDropdownMenu");
+  menu.innerHTML = "";
   const vehicles = Array.from(new Set(ALL.map(r => r[COL.vehicle]).filter(Boolean)));
   vehicles.forEach(v => {
-    const opt = document.createElement("option");
-    opt.value = opt.textContent = v;
-    sel.appendChild(opt);
+    const div = document.createElement("div");
+    div.className = "px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2";
+    div.innerHTML = `
+      <input type="checkbox" id="vehicle-${v}" value="${v}" class="form-checkbox h-4 w-4 text-blue-600 rounded">
+      <label for="vehicle-${v}" class="text-sm cursor-pointer w-full">${v}</label>
+    `;
+    menu.appendChild(div);
   });
 }
+
 /* ===== تحليل كفاءة المركبات (من شيت المركبات) ===== */
 function renderVehAnalysis(){
   const tb=document.getElementById("vehAnalysisTable");
   if(!tb) return;
   tb.innerHTML="";
+  if(VEHICLES.length===0||VIEW.length===0) return;
   
-  const vaSort=document.getElementById("vaSort")?.value || "eff";
-  const vaYear=parseInt(document.getElementById("vaYear")?.value || "0");
-  const vaSearch=document.getElementById("vaSearch")?.value?.toLowerCase() || "";
-  
-  // Calculate costs (assumptions from previous steps)
-  const fuelPricePerLiter = 0.94; // دينار أردني
-  const maintenanceCostPerKm = 0.15; // دينار أردني
-  const averageKmPerTrip = 10;
-  const fuelConsumptionLitersPer100Km = 30; // 30 لتر لكل 100 كم
-  
-  let analysis = VEHICLES.map(v => {
-    const vehId = v['رقم المركبة'];
-    const trips = vehicleAggregates[vehId]?.trips || 0;
-    const weightTon = vehicleAggregates[vehId]?.weightTon || 0;
-    
-    const eff = (toNumber(v['السعة النظرية']) > 0 && trips > 0) ? (weightTon / toNumber(v['السعة النظرية']) / trips) * 100 : 0;
-    
-    const dist = trips * averageKmPerTrip;
-    const fuelCost = (dist / 100) * fuelConsumptionLitersPer100Km * fuelPricePerLiter;
-    const maintenanceCost = dist * maintenanceCostPerKm;
-    const totalCost = fuelCost + maintenanceCost;
-    
-    const costPerTrip = trips ? totalCost / trips : 0;
-    const costPerTon = weightTon ? totalCost / weightTon : 0;
-    
-    return {
-      vehicle: v['رقم المركبة'],
-      year: toNumber(v['سنة الصنع']),
-      capacityM3: toNumber(v['السعة (م³)']),
-      capacityTon: toNumber(v['السعة النظرية']),
-      trips: trips,
-      weightTon: weightTon,
-      efficiency: eff,
-      costPerTrip: costPerTrip,
-      costPerTon: costPerTon
-    };
+  // تجميع السائقين لكل مركبة
+  const vehicleDrivers  = {};
+  VIEW.forEach(r => {
+    const v = r[COL.vehicle] || "مجهولة";
+    const d = r[COL.driver] || "بدون سائق";
+    if (!vehicleDrivers[v]) vehicleDrivers[v] = new Set();
+    vehicleDrivers[v].add(d);
   });
-  
-  // Filter and sort
-  if(vaYear>0){ analysis=analysis.filter(r=>r.year>=vaYear); }
-  if(vaSearch){
-    analysis=analysis.filter(r=>r.vehicle.toLowerCase().includes(vaSearch));
-  }
-  if(vaSort==="eff"){ analysis.sort((a,b)=>b.efficiency - a.efficiency); }
-  else if(vaSort==="year"){ analysis.sort((a,b)=>b.year - a.year); }
-  else if(vaSort==="capTon"){ analysis.sort((a,b)=>b.capacityTon - a.capacityTon); }
-  else if(vaSort==="costTrip"){ analysis.sort((a,b)=>b.costPerTrip - a.costPerTrip); }
-  else if(vaSort==="costTon"){ analysis.sort((a,b)=>b.costPerTon - a.costPerTon); }
-  
-  analysis.forEach(row => {
+
+  const byVehicleWeight={};
+  const byVehicleTrips={};
+  VIEW.forEach(r=>{
+    const v=r[COL.vehicle]||"مجهولة";
+    byVehicleWeight[v]=(byVehicleWeight[v]||0)+toNumber(r[COL.weight]);
+    byVehicleTrips[v]=(byVehicleTrips[v]||0)+1;
+  });
+
+  const vaQuery=document.getElementById("vaSearch").value.toLowerCase();
+  const vaYearFilter=parseInt(document.getElementById("vaYear").value||"0");
+  const vaSort=document.getElementById("vaSort").value;
+
+  // تجميع كلف الوقود من الشيت
+  const fuelMap = {};
+  FUEL.forEach(f => {
+    const vnum = String(f["رقم المركبة"] || "").trim();
+    if (!vnum) return;
+    let totalFuelCost = 0;
+    const months = ["jan", "feb", "mar", "apr", "may", "jun", "july", "aug", "sep", "oct", "nov", "dec"];
+    for (const m of months) {
+      if (f[m]) {
+        totalFuelCost += toNumber(f[m]);
+      }
+    }
+    fuelMap[vnum] = totalFuelCost;
+  });
+
+  // تجميع كلف الصيانة من الشيت
+  const maintenanceMap = {};
+  MAINTENANCE.forEach(m => {
+    const vnum = String(m["رقم المركبة"] || "").trim();
+    if (vnum && m["كلفة الصيانة"]) {
+      maintenanceMap[vnum] = toNumber(m["كلفة الصيانة"]);
+    }
+  });
+
+  const vehicleData = [];
+  VEHICLES.forEach(vh => {
+    const vnum = String(vh["رقم المركبة"]||"");
+    const year = parseInt(vh["سنة التصنيع"] || "0");
+    const drivers = Array.from(vehicleDrivers[vnum]||[]).join(', ');
+
+    if (vaQuery && !vnum.toLowerCase().includes(vaQuery) && !drivers.toLowerCase().includes(vaQuery)) return;
+    if (vaYearFilter && year < vaYearFilter) return;
+
+    const capM3 = toNumber(vh["سعة المركبة بالمتر المكعب"]);
+    const dens = toNumber(vh["كثافة التحميل"]);
+    const capTon = capM3 * dens;
+    const trips = byVehicleTrips[vnum] || 0;
+    const wkg = byVehicleWeight[vnum] || 0;
+    const wton = wkg / 1000;
+    const eff = (trips > 0 && capTon > 0) ? (wton / (trips * capTon)) * 100 : 0;
+    const fuelCost = fuelMap[vnum] || 0;
+    const maintenanceCost = maintenanceMap[vnum] || 0;
+
+    vehicleData.push({ vnum, drivers, year, capM3, capTon, trips, wton, eff, fuelCost, maintenanceCost });
+  });
+  vehicleData.sort((a, b) => {
+    if (vaSort === "year") return b.year - a.year;
+    else if (vaSort === "capTon") return b.capTon - a.capTon;
+    else return b.eff - a.eff;
+  });
+  vehicleData.forEach(row => {
     const tr = document.createElement("tr");
     tr.className = "border-b hover:bg-gray-50";
     tr.innerHTML = `
-      <td class="px-4 py-2">${row.vehicle}</td>
-      <td class="px-4 py-2">${row.year}</td>
-      <td class="px-4 py-2">${row.capacityM3}</td>
-      <td class="px-4 py-2">${row.capacityTon}</td>
+      <td class="px-4 py-2">${row.vnum}</td>
+      <td class="px-4 py-2">${row.drivers}</td>
+      <td class="px-4 py-2">${row.year || "-"}</td>
+      <td class="px-4 py-2">${row.capM3.toFixed(1)}</td>
+      <td class="px-4 py-2">${row.capTon.toFixed(2)}</td>
       <td class="px-4 py-2">${row.trips}</td>
-      <td class="px-4 py-2">${row.weightTon.toFixed(2)}</td>
-      <td class="px-4 py-2">${row.efficiency.toFixed(2)}</td>
-      <td class="px-4 py-2">${row.costPerTrip.toFixed(2)}</td>
-      <td class="px-4 py-2">${row.costPerTon.toFixed(2)}</td>
+      <td class="px-4 py-2">${row.wton.toFixed(2)}</td>
+      <td class="px-4 py-2">${row.eff.toFixed(1)}%</td>
+      <td class="px-4 py-2">${row.fuelCost.toFixed(2)}</td>
+      <td class="px-4 py-2">${row.maintenanceCost.toFixed(2)}</td>
     `;
     tb.appendChild(tr);
   });
 }
-/* ===== تصدير CSV (سجل الرحلات) ===== */
-function exportAllToCSV(){
-  const headers = Object.keys(ALL[0]).join(',');
-  const csv = [
-    headers,
-    ...ALL.map(row => Object.values(row).map(v=>`"${v}"`).join(','))
-  ].join('\n');
-  const blob = new Blob(["\uFEFF"+csv], {type: "text/csv;charset=utf-8"});
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "سجل_الرحلات.csv";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+
+/* ===== Export Helpers ===== */
+function exportCSV() {
+  const headers = ['الشهر','تاريخ التوزين الثاني','السائق','صافي التحميل (طن)','رقم المركبة'];
+  const rows = VIEW.map(r => [
+    r[COL.month] || '',
+    r[COL.date] || '',
+    r[COL.driver] || '',
+    (toNumber(r[COL.weight])/1000).toFixed(2),
+    r[COL.vehicle] || ''
+  ]);
+  const csv = [headers.join(','), ...rows.map(a=>a.join(','))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'trips.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
-/* ===== تصدير Excel ===== */
-function exportToXLSX() {
-  const ws1 = XLSX.utils.json_to_sheet(ALL);
-  const vehData = VEHICLES.map(v => {
-    const trips = vehicleAggregates[v['رقم المركبة']]?.trips || 0;
-    const weightTon = vehicleAggregates[v['رقم المركبة']]?.weightTon || 0;
-    const eff = (toNumber(v['السعة النظرية']) > 0 && trips > 0) ? (weightTon / toNumber(v['السعة النظرية']) / trips) * 100 : 0;
-    return {
-      'رقم المركبة': v['رقم المركبة'],
-      'سنة التصنيع': toNumber(v['سنة الصنع']),
-      'السعة (م³)' : toNumber(v['السعة (م³)']),
-      'السعة النظرية (طن)': toNumber(v['السعة النظرية']),
-      'عدد الرحلات': trips,
-      'الوزن المنقول (طن)': weightTon,
-      'نسبة الاستغلال %': eff.toFixed(2)
-    };
+function buildVehicleSummaryArray() {
+  const byVehicleWeight = {};
+  const byVehicleTrips  = {};
+  const vehicleDrivers  = {};
+  VIEW.forEach(r => {
+    const v = r[COL.vehicle] || 'مجهولة';
+    const d = r[COL.driver] || 'بدون سائق';
+    byVehicleWeight[v] = (byVehicleWeight[v] || 0) + toNumber(r[COL.weight]);
+    byVehicleTrips[v]  = (byVehicleTrips[v]  || 0) + 1;
+    if (!vehicleDrivers[v]) vehicleDrivers[v] = new Set();
+    vehicleDrivers[v].add(d);
   });
-  const ws2 = XLSX.utils.json_to_sheet(vehData);
+  const vehiclesSet = new Set([...Object.keys(byVehicleTrips), ...Object.keys(byVehicleWeight)]);
+  const summary = Array.from(vehiclesSet).map(v => ({
+    'رقم المركبة': v,
+    'السائقين': Array.from(vehicleDrivers[v] || []).join(', '),
+    'عدد الرحلات': byVehicleTrips[v] || 0,
+    'إجمالي الوزن (طن)': ((byVehicleWeight[v] || 0)/1000).toFixed(2)
+  }));
+  return summary;
+}
+function exportXLSX() {
+  const trips = VIEW.map(r => ({
+    'الشهر': r[COL.month] || '',
+    'تاريخ التوزين الثاني': r[COL.date] || '',
+    'السائق': r[COL.driver] || '',
+    'صافي التحميل (طن)': (toNumber(r[COL.weight])/1000).toFixed(2),
+    'رقم المركبة': r[COL.vehicle] || ''
+  }));
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws1, "سجل الرحلات");
-  XLSX.utils.book_append_sheet(wb, ws2, "ملخص المركبات");
-  XLSX.writeFile(wb, "تقرير_بيانات_النقل.xlsx");
+  const ws1 = XLSX.utils.json_to_sheet(trips);
+  XLSX.utils.book_append_sheet(wb, ws1, 'سجل الرحلات');
+  const ws2 = XLSX.utils.json_to_sheet(buildVehicleSummaryArray());
+  XLSX.utils.book_append_sheet(wb, ws2, 'ملخص المركبات');
+  XLSX.writeFile(wb, 'transport_dashboard.xlsx');
 }
-
-/* ===== تصدير PDF ===== */
-async function exportToPDF() {
+async function exportPDF() {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ format: 'a4', unit: 'pt', orientation: 'landscape' });
-  const margin = 20;
-  const element = document.getElementById('rawTripsBox');
-  doc.html(element, {
-    callback: function (doc) {
-      doc.save('سجل_الرحلات.pdf');
-    },
-    x: margin,
-    y: margin,
-    width: 842 - (margin * 2), // A4 landscape width - margins
-    windowWidth: element.scrollWidth,
-  });
+  const doc = new jsPDF('l', 'pt', 'a4');
+  const node = document.getElementById('rawTripsBox');
+  const canvas = await html2canvas(node, {scale: 2});
+  const imgData = canvas.toDataURL('image/png');
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const imgWidth = pageWidth - 40;
+  const imgHeight = canvas.height * (imgWidth / canvas.width);
+  if (imgHeight < pageHeight - 40) {
+    doc.addImage(imgData, 'PNG', 20, 20, imgWidth, imgHeight);
+  } else {
+    let remaining = imgHeight;
+    const pageHeightPx = canvas.height * ((pageHeight - 40) / imgHeight);
+    while (remaining > 0) {
+      const sectionCanvas = document.createElement('canvas');
+      sectionCanvas.width = canvas.width;
+      sectionCanvas.height = Math.min(pageHeightPx, remaining);
+      const ctx = sectionCanvas.getContext('2d');
+      ctx.drawImage(canvas, 0, canvas.height - remaining, canvas.width, sectionCanvas.height, 0, 0, sectionCanvas.width, sectionCanvas.height);
+      const sectionImg = sectionCanvas.toDataURL('image/png');
+      doc.addImage(sectionImg, 'PNG', 20, 20, imgWidth, (sectionCanvas.height * (imgWidth / sectionCanvas.width)));
+      remaining -= pageHeightPx;
+      if (remaining > 0) doc.addPage();
+    }
+  }
+  doc.save('trips.pdf');
 }
 
-/* ===== تصدير CSV (تحليل السائقين) ===== */
-function exportDriverAnalysisToCSV() {
-  const rows = getDriverAggregates();
-  const headers = ['السائق', 'عدد الرحلات', 'الوزن (طن)', 'متوسط/رحلة (طن)', 'عدد المركبات', 'المركبات'].join(',');
-  const csv = [
-    headers,
-    ...rows.map(r => `${r.driver},${r.trips},${r.weightTon.toFixed(2)},${r.avgTon.toFixed(2)},${r.vehCount},"${r.vehList}"`).join('\n')
-  ].join('\n');
-  const blob = new Blob(["\uFEFF"+csv], {type: "text/csv;charset=utf-8"});
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "تحليل_السائقين.csv";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-/* ===== ربط الأحداث ===== */
-document.getElementById('q').addEventListener('input', render);
-document.getElementById('monthSelect').addEventListener('change', render);
-document.getElementById('vehSelect').addEventListener('change', render);
-document.getElementById('dateExact').addEventListener('change', render);
-document.getElementById('resetBtn').addEventListener('click', () => {
-  document.getElementById('q').value = '';
-  document.getElementById('dateExact').value = '';
-  document.getElementById('monthSelect').selectedIndex = -1;
-  document.getElementById('vehicleSelect').selectedIndex = -1;
+/* ===== أحداث ===== */
+// فلاتر عامة
+document.getElementById("q").addEventListener("input", ()=>{ currentPage=1; render(); });
+document.getElementById("dateExact").addEventListener("change", ()=>{ currentPage=1; render(); });
+document.getElementById("resetBtn").addEventListener("click", () => {
+  document.getElementById("q").value = "";
+  document.getElementById("dateExact").value = "";
+  document.querySelectorAll("#monthDropdownMenu input[type='checkbox']").forEach(o=>o.checked=false);
+  document.querySelectorAll("#vehicleDropdownMenu input[type='checkbox']").forEach(o=>o.checked=false);
+  updateDropdownButtonText('monthDropdownMenu', 'monthDropdownBtn', 'الشهور');
+  updateDropdownButtonText('vehicleDropdownMenu', 'vehicleDropdownBtn', 'المركبات');
+  currentPage = 1;
   render();
 });
-document.getElementById('refreshBtn').addEventListener('click', startApp);
+document.getElementById("refreshBtn").addEventListener("click", () => { setLoading(true); dataLoaded=false; vehiclesLoaded=false; fuelLoaded=false; maintenanceLoaded=false; loadData(); loadVehSheet(); loadFuelSheet(); loadMaintenanceSheet(); });
 
-document.getElementById('monthSelectAll').addEventListener('click', ()=>{
-  document.querySelectorAll('#monthSelect option').forEach(opt=>opt.selected=true);
-  render();
-});
-document.getElementById('monthClearAll').addEventListener('click', ()=>{
-  document.querySelectorAll('#monthSelect option').forEach(opt=>opt.selected=false);
-  render();
-});
-document.getElementById('vehSelectAll').addEventListener('click', ()=>{
-  document.querySelectorAll('#vehicleSelect option').forEach(opt=>opt.selected=true);
-  render();
-});
-document.getElementById('vehClearAll').addEventListener('click', ()=>{
-  document.querySelectorAll('#vehicleSelect option').forEach(opt=>opt.selected=false);
-  render();
-});
-
-// veh analysis
-document.getElementById('vaSearch').addEventListener('input', renderVehAnalysis);
-document.getElementById('vaYear').addEventListener('input', renderVehAnalysis);
-document.getElementById('vaSort').addEventListener('change', renderVehAnalysis);
-// charts
-document.getElementById('vwSearch').addEventListener('input', updateKPIs);
-document.getElementById('vwTopN').addEventListener('input', updateKPIs);
-document.getElementById('vtSearch').addEventListener('input', updateKPIs);
-document.getElementById('vtTopN').addEventListener('input', updateKPIs);
+// سلاسل زمنية
 document.getElementById('tsAgg').addEventListener('change', updateTimeSeriesChart);
 document.getElementById('tsMetric').addEventListener('change', updateTimeSeriesChart);
-// export
-document.getElementById('btnCSV').addEventListener('click', exportAllToCSV);
-document.getElementById('btnXLSX').addEventListener('click', exportToXLSX);
-document.getElementById('btnPDF').addEventListener('click', exportToPDF);
-document.getElementById('btnDriversCSV').addEventListener('click', exportDriverAnalysisToCSV);
+// أزرار تصدير
+document.getElementById('btnCSV').addEventListener('click', exportCSV);
+document.getElementById('btnXLSX').addEventListener('click', exportXLSX);
+document.getElementById('btnPDF').addEventListener('click', exportPDF);
+document.getElementById('btnDriversCSV').addEventListener('click', ()=>{
+  const rows = getDriverAggregates();
+  const headers = ['السائق','عدد الرحلات','الوزن (طن)','متوسط/رحلة (طن)','عدد المركبات','المركبات'];
+  const csv = [headers.join(','), ...rows.map(r=>[r.driver,r.trips,r.weightTon,r.avgTon,r.vehCount,`"${r.vehList.replace(/"/g,'""')}"`].join(','))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'drivers_analysis.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+// تحليل المركبات
+document.getElementById('vaSearch').addEventListener('input',()=>{ renderVehAnalysis(); });
+document.getElementById('vaYear').addEventListener('input',()=>{ renderVehAnalysis(); });
+document.getElementById('vaSort').addEventListener('change', ()=>{ renderVehAnalysis(); });
+
 // تحليل السائقين
 document.getElementById('driverSort').addEventListener('change', updateDriverViews);
 document.getElementById('driverTopN').addEventListener('input', updateDriverViews);
 document.getElementById('driverSearch').addEventListener('input', updateDriverViews);
+
 // ترقيم الصفحات
 document.getElementById('prevPage').addEventListener('click', ()=>{ if (currentPage>1){ currentPage--; updateTable(); } });
 document.getElementById('nextPage').addEventListener('click', ()=>{ const totalPages=Math.max(1, Math.ceil(VIEW.length / pageSize)); if (currentPage<totalPages){ currentPage++; updateTable(); } });
 document.getElementById('prevPage2').addEventListener('click', ()=>{ if (currentPage>1){ currentPage--; updateTable(); } });
 document.getElementById('nextPage2').addEventListener('click', ()=>{ const totalPages=Math.max(1, Math.ceil(VIEW.length / pageSize)); if (currentPage<totalPages){ currentPage++; updateTable(); } });
 document.getElementById('pageSize').addEventListener('change', (e)=>{ pageSize=parseInt(e.target.value||'25',10); currentPage=1; updateTable(); });
+
+/* ===== قوائم منسدلة جديدة ===== */
+function updateDropdownButtonText(menuId, buttonId, labelText) {
+  const menu = document.getElementById(menuId);
+  const button = document.getElementById(buttonId);
+  const selectedCheckboxes = Array.from(menu.querySelectorAll("input[type='checkbox']:checked"));
+  if (selectedCheckboxes.length === 0) {
+    button.textContent = `اختر ${labelText}...`;
+  } else if (selectedCheckboxes.length === menu.querySelectorAll("input[type='checkbox']").length) {
+    button.textContent = `كل ${labelText}`;
+  } else {
+    button.textContent = `${selectedCheckboxes.length} ${labelText} مختار`;
+  }
+}
+
+document.getElementById('monthDropdownBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const menu = document.getElementById('monthDropdownMenu');
+  menu.classList.toggle('hidden');
+});
+
+document.getElementById('vehicleDropdownBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const menu = document.getElementById('vehicleDropdownMenu');
+  menu.classList.toggle('hidden');
+});
+
+// إخفاء القوائم عند النقر خارجها
+window.addEventListener('click', (e) => {
+  if (!document.getElementById('monthDropdownBtn').contains(e.target)) {
+    document.getElementById('monthDropdownMenu').classList.add('hidden');
+  }
+  if (!document.getElementById('vehicleDropdownBtn').contains(e.target)) {
+    document.getElementById('vehicleDropdownMenu').classList.add('hidden');
+  }
+});
+
+// تحديث نص الأزرار عند تغيير الاختيار
+document.getElementById('monthDropdownMenu').addEventListener('change', () => {
+  updateDropdownButtonText('monthDropdownMenu', 'monthDropdownBtn', 'الشهور');
+  render();
+});
+document.getElementById('vehicleDropdownMenu').addEventListener('change', () => {
+  updateDropdownButtonText('vehicleDropdownMenu', 'vehicleDropdownBtn', 'المركبات');
+  render();
+});
+
+// تعديل وظائف تحديد الكل ومسح الكل
+document.getElementById('monthSelectAll').addEventListener('click', () => {
+  document.querySelectorAll("#monthDropdownMenu input[type='checkbox']").forEach(cb => cb.checked = true);
+  updateDropdownButtonText('monthDropdownMenu', 'monthDropdownBtn', 'الشهور');
+  render();
+});
+document.getElementById('monthClearAll').addEventListener('click', () => {
+  document.querySelectorAll("#monthDropdownMenu input[type='checkbox']").forEach(cb => cb.checked = false);
+  updateDropdownButtonText('monthDropdownMenu', 'monthDropdownBtn', 'الشهور');
+  render();
+});
+document.getElementById('vehSelectAll').addEventListener('click', () => {
+  document.querySelectorAll("#vehicleDropdownMenu input[type='checkbox']").forEach(cb => cb.checked = true);
+  updateDropdownButtonText('vehicleDropdownMenu', 'vehicleDropdownBtn', 'المركبات');
+  render();
+});
+document.getElementById('vehClearAll').addEventListener('click', () => {
+  document.querySelectorAll("#vehicleDropdownMenu input[type='checkbox']").forEach(cb => cb.checked = false);
+  updateDropdownButtonText('vehicleDropdownMenu', 'vehicleDropdownBtn', 'المركبات');
+  render();
+});
+
 
 /* ===== Render شامل ===== */
 function render() {
@@ -954,7 +1118,13 @@ function render() {
 if (window.ChartDataLabels) { Chart.register(ChartDataLabels); }
 
 /* ===== Start ===== */
-document.addEventListener("DOMContentLoaded", startApp);
+document.addEventListener("DOMContentLoaded", ()=>{
+  setLoading(true);
+  loadData();
+  loadVehSheet();
+  loadFuelSheet();
+  loadMaintenanceSheet();
+});
 </script>
 </body>
 </html>
