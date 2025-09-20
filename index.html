@@ -173,6 +173,8 @@
               <th class="px-4 py-2">عدد الرحلات</th>
               <th class="px-4 py-2">الوزن المنقول (طن)</th>
               <th class="px-4 py-2">نسبة الاستغلال %</th>
+              <th class="px-4 py-2">كلفة الوقود</th>
+              <th class="px-4 py-2">كلفة الصيانة</th>
             </tr>
           </thead>
           <tbody id="vehAnalysisTable"></tbody>
@@ -276,17 +278,22 @@ const COL = {
 /* ===== روابط الشيتات ===== */
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=0&single=true&output=csv";
 const VEH_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=2001178330&single=true&output=csv";
+const FUEL_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=1380959426&single=true&output=csv";
+const MAINTENANCE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=2095309457&single=true&output=csv";
+
 /* ===== متغيرات عامة ===== */
 let ALL = [];
 let VIEW = [];
 let VEHICLES = [];
+let FUEL = [];
+let MAINTENANCE = [];
 let vehicleWeightChart = null;
 let vehicleTripsChart  = null;
 let timeSeriesChart    = null;
 let driverChart        = null;
 
 /* تحميل/تعطيل */
-let dataLoaded = false, vehiclesLoaded = false;
+let dataLoaded = false, vehiclesLoaded = false, fuelLoaded = false, maintenanceLoaded = false;
 const controlsSelector = 'input, select, button';
 function setLoading(state) {
   const overlay = document.getElementById('loadingOverlay');
@@ -297,7 +304,7 @@ function setLoading(state) {
   });
 }
 function maybeHideOverlay() {
-  if (dataLoaded && vehiclesLoaded) setLoading(false);
+  if (dataLoaded && vehiclesLoaded && fuelLoaded && maintenanceLoaded) setLoading(false);
 }
 
 /* أدوات مساعدة */
@@ -710,6 +717,36 @@ async function loadVehSheet(){
     maybeHideOverlay();
   }
 }
+async function loadFuelSheet(){
+  try{
+    const result=await new Promise((resolve,reject)=>{
+      Papa.parse(FUEL_URL,{download:true,header:true,skipEmptyLines:true,complete:resolve,error:reject});
+    });
+    FUEL=result.data;
+    fuelLoaded = true;
+    maybeHideOverlay();
+    renderVehAnalysis();
+  }catch(e){
+    console.error("خطأ تحميل شيت الوقود:",e);
+    fuelLoaded = true;
+    maybeHideOverlay();
+  }
+}
+async function loadMaintenanceSheet(){
+  try{
+    const result=await new Promise((resolve,reject)=>{
+      Papa.parse(MAINTENANCE_URL,{download:true,header:true,skipEmptyLines:true,complete:resolve,error:reject});
+    });
+    MAINTENANCE=result.data;
+    maintenanceLoaded = true;
+    maybeHideOverlay();
+    renderVehAnalysis();
+  }catch(e){
+    console.error("خطأ تحميل شيت الصيانة:",e);
+    maintenanceLoaded = true;
+    maybeHideOverlay();
+  }
+}
 async function loadData() {
   try {
     const result = await new Promise((resolve, reject) => {
@@ -795,6 +832,30 @@ function renderVehAnalysis(){
   const vaYearFilter=parseInt(document.getElementById("vaYear").value||"0");
   const vaSort=document.getElementById("vaSort").value;
 
+  // تجميع كلف الوقود من الشيت
+  const fuelMap = {};
+  FUEL.forEach(f => {
+    const vnum = String(f["رقم المركبة"] || "").trim();
+    if (!vnum) return;
+    let totalFuelCost = 0;
+    const months = ["jan", "feb", "mar", "apr", "may", "jun", "july", "aug", "sep", "oct", "nov", "dec"];
+    for (const m of months) {
+      if (f[m]) {
+        totalFuelCost += toNumber(f[m]);
+      }
+    }
+    fuelMap[vnum] = totalFuelCost;
+  });
+
+  // تجميع كلف الصيانة من الشيت
+  const maintenanceMap = {};
+  MAINTENANCE.forEach(m => {
+    const vnum = String(m["رقم المركبة"] || "").trim();
+    if (vnum && m["كلفة الصيانة"]) {
+      maintenanceMap[vnum] = toNumber(m["كلفة الصيانة"]);
+    }
+  });
+
   const vehicleData = [];
   VEHICLES.forEach(vh => {
     const vnum = String(vh["رقم المركبة"]||"");
@@ -811,8 +872,10 @@ function renderVehAnalysis(){
     const wkg = byVehicleWeight[vnum] || 0;
     const wton = wkg / 1000;
     const eff = (trips > 0 && capTon > 0) ? (wton / (trips * capTon)) * 100 : 0;
+    const fuelCost = fuelMap[vnum] || 0;
+    const maintenanceCost = maintenanceMap[vnum] || 0;
 
-    vehicleData.push({ vnum, drivers, year, capM3, capTon, trips, wton, eff });
+    vehicleData.push({ vnum, drivers, year, capM3, capTon, trips, wton, eff, fuelCost, maintenanceCost });
   });
   vehicleData.sort((a, b) => {
     if (vaSort === "year") return b.year - a.year;
@@ -831,6 +894,8 @@ function renderVehAnalysis(){
       <td class="px-4 py-2">${row.trips}</td>
       <td class="px-4 py-2">${row.wton.toFixed(2)}</td>
       <td class="px-4 py-2">${row.eff.toFixed(1)}%</td>
+      <td class="px-4 py-2">${row.fuelCost.toFixed(2)}</td>
+      <td class="px-4 py-2">${row.maintenanceCost.toFixed(2)}</td>
     `;
     tb.appendChild(tr);
   });
@@ -934,7 +999,7 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   currentPage = 1;
   render();
 });
-document.getElementById("refreshBtn").addEventListener("click", () => { setLoading(true); dataLoaded=false; vehiclesLoaded=false; loadData(); loadVehSheet(); });
+document.getElementById("refreshBtn").addEventListener("click", () => { setLoading(true); dataLoaded=false; vehiclesLoaded=false; fuelLoaded=false; maintenanceLoaded=false; loadData(); loadVehSheet(); loadFuelSheet(); loadMaintenanceSheet(); });
 
 // سلاسل زمنية
 document.getElementById('tsAgg').addEventListener('change', updateTimeSeriesChart);
@@ -1057,6 +1122,8 @@ document.addEventListener("DOMContentLoaded", ()=>{
   setLoading(true);
   loadData();
   loadVehSheet();
+  loadFuelSheet();
+  loadMaintenanceSheet();
 });
 </script>
 </body>
