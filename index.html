@@ -15,13 +15,9 @@
     /* تخصيص شريط تمرير بسيط */
     ::-webkit-scrollbar { height: 8px; width: 8px; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
-  
-    .dropdown-menu { display:none; }
-    .dropdown-menu.show { display:block; }
-</style>
+  </style>
 </head>
 <body class="bg-gray-50 text-gray-900">
-  <!-- Overlay التحميل -->
   <div id="loadingOverlay" class="fixed inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-50">
     <div class="flex flex-col items-center gap-3">
       <div class="h-8 w-8 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></div>
@@ -38,47 +34,40 @@
   </header>
 
   <main class="container mx-auto px-4 py-6">
-    <!-- فلاتر عليا -->
     <div class="bg-white rounded-xl shadow p-4 mb-6 grid grid-cols-1 lg:grid-cols-7 gap-4">
       <div class="lg:col-span-2">
         <label class="block text-sm mb-1">بحث عام</label>
         <input id="q" type="text" placeholder="ابحث بتاريخ أو سائق أو رقم مركبة..." class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
       </div>
 
-      
-<div>
-  <div class="flex items-center justify-between">
-    <label class="block text-sm mb-1">الشهور (اختيار متعدد)</label>
-    <div class="flex gap-2 text-xs">
-      <button id="monthSelectAll" class="px-2 py-1 rounded border hover:bg-gray-50">تحديد الكل</button>
-      <button id="monthClearAll" class="px-2 py-1 rounded border hover:bg-gray-50">مسح</button>
-    </div>
-  </div>
-  <div class="relative">
-    <button id="monthDropdownBtn" class="w-full border rounded-lg px-3 py-2 text-left">اختر الشهور</button>
-    <div id="monthDropdown" class="dropdown-menu absolute mt-1 bg-white border rounded-lg shadow z-10 max-h-60 overflow-auto w-full"></div>
-  </div>
-</div>
-
-        <select id="monthSelect" multiple size="6" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"></select>
+      <div>
+        <div class="flex items-center justify-between">
+          <label class="block text-sm mb-1">الشهور (اختيار متعدد)</label>
+          <div class="flex gap-2 text-xs">
+            <button id="monthSelectAll" class="px-2 py-1 rounded border hover:bg-gray-50">تحديد الكل</button>
+            <button id="monthClearAll" class="px-2 py-1 rounded border hover:bg-gray-50">مسح</button>
+          </div>
+        </div>
+        <div class="relative">
+          <button id="monthDropdownBtn" class="w-full text-right border rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300">اختر الشهور...</button>
+          <div id="monthDropdownMenu" class="absolute hidden top-full left-0 z-10 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto mt-1">
+            </div>
+        </div>
       </div>
 
-      
-<div>
-  <div class="flex items-center justify-between">
-    <label class="block text-sm mb-1">أرقام المركبات (اختيار متعدد)</label>
-    <div class="flex gap-2 text-xs">
-      <button id="vehSelectAll" class="px-2 py-1 rounded border hover:bg-gray-50">تحديد الكل</button>
-      <button id="vehClearAll" class="px-2 py-1 rounded border hover:bg-gray-50">مسح</button>
-    </div>
-  </div>
-  <div class="relative">
-    <button id="vehDropdownBtn" class="w-full border rounded-lg px-3 py-2 text-left">اختر المركبات</button>
-    <div id="vehDropdown" class="dropdown-menu absolute mt-1 bg-white border rounded-lg shadow z-10 max-h-60 overflow-auto w-full"></div>
-  </div>
-</div>
-
-        <select id="vehicleSelect" multiple size="6" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"></select>
+      <div>
+        <div class="flex items-center justify-between">
+          <label class="block text-sm mb-1">أرقام المركبات (اختيار متعدد)</label>
+          <div class="flex gap-2 text-xs">
+            <button id="vehSelectAll" class="px-2 py-1 rounded border hover:bg-gray-50">تحديد الكل</button>
+            <button id="vehClearAll" class="px-2 py-1 rounded border hover:bg-gray-50">مسح</button>
+          </div>
+        </div>
+        <div class="relative">
+          <button id="vehicleDropdownBtn" class="w-full text-right border rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300">اختر المركبات...</button>
+          <div id="vehicleDropdownMenu" class="absolute hidden top-full left-0 z-10 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto mt-1">
+            </div>
+        </div>
       </div>
 
       <div>
@@ -94,7 +83,6 @@
       </div>
     </div>
 
-    <!-- KPIs -->
     <div class="grid grid-cols-1 md:grid-cols-9 gap-6 mb-6">
       <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">إجمالي الرحلات</p><h3 id="k_trips" class="text-2xl font-bold text-blue-600">0</h3></div>
       <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">إجمالي الوزن</p><h3 id="k_weight" class="text-2xl font-bold text-green-600">0</h3></div>
@@ -119,7 +107,6 @@
       </div>
     </div>
 
-    <!-- السلاسل الزمنية -->
     <div id="timeSeriesBox" class="bg-white rounded-xl shadow p-6 mb-6">
       <div class="flex flex-wrap items-center gap-3 mb-4">
         <h3 class="font-semibold">السلاسل الزمنية</h3>
@@ -136,7 +123,6 @@
       <p class="text-xs text-gray-500 mt-2">* قد تُستثنى السجلات بلا تاريخ من الرسم اليومي.</p>
     </div>
 
-    <!-- وزن حسب المركبة -->
     <div id="chartWeightBox" class="bg-white rounded-xl shadow p-6 mb-6">
       <h3 class="mb-2 font-semibold">وزن النقل حسب المركبة (بالطن)</h3>
       <div class="flex flex-wrap items-center gap-3 mb-4">
@@ -148,7 +134,6 @@
       <canvas id="vehicleWeightChart" height="120"></canvas>
     </div>
 
-    <!-- رحلات حسب المركبة -->
     <div id="chartTripsBox" class="bg-white rounded-xl shadow p-6 mb-6">
       <h3 class="mb-2 font-semibold">نسبة عدد الرحلات لكل مركبة</h3>
       <div class="flex flex-wrap items-center gap-3 mb-4">
@@ -160,7 +145,6 @@
       <canvas id="vehicleTripsChart" height="120"></canvas>
     </div>
 
-    <!-- تحليل كفاءة المركبات -->
     <div id="vehAnalysisBox" class="bg-white rounded-xl shadow overflow-hidden mt-6 mb-6">
       <div class="p-4 border-b">
         <div class="flex flex-wrap items-center gap-3 mb-4">
@@ -195,7 +179,6 @@
       </div>
     </div>
 
-    <!-- أدوات التصدير العامة -->
     <div class="flex flex-wrap gap-2 mb-6">
       <button id="btnCSV" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">تصدير CSV (الرحلات الحالية)</button>
       <button id="btnXLSX" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">تصدير Excel (رحلات + ملخص مركبات)</button>
@@ -203,7 +186,6 @@
       <button id="btnDriversCSV" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">تصدير CSV (تحليل السائقين)</button>
     </div>
 
-    <!-- تحليل السائقين الموسع -->
     <div id="driversBox" class="bg-white rounded-xl shadow p-6 mb-6">
       <div class="flex flex-wrap items-center gap-3 mb-4">
         <h3 class="font-semibold">تحليل السائقين</h3>
@@ -236,7 +218,6 @@
       </div>
     </div>
 
-    <!-- سجل الرحلات مع ترقيم صفحات -->
     <div id="rawTripsBox" class="bg-white rounded-xl shadow overflow-hidden">
       <div class="p-4 border-b">
         <h3 class="font-semibold">سجل الرحلات</h3>
@@ -291,16 +272,13 @@ const COL = {
   weight: "صافي التحميل",
   vehicle: "رقم المركبة"
 };
-
 /* ===== روابط الشيتات ===== */
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=0&single=true&output=csv";
 const VEH_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=2001178330&single=true&output=csv";
-
 /* ===== متغيرات عامة ===== */
 let ALL = [];
 let VIEW = [];
 let VEHICLES = [];
-
 let vehicleWeightChart = null;
 let vehicleTripsChart  = null;
 let timeSeriesChart    = null;
@@ -346,21 +324,18 @@ function toYM(dt) {
   const m = String(dt.getMonth()+1).padStart(2,'0');
   return `${y}-${m}`;
 }
-function getMultiValues(sel) {
-  return Array.from(sel.selectedOptions || []).map(o => String(o.value).trim()).filter(Boolean);
-}
 
 /* ===== فلترة ===== */
 function applyFilters() {
   const q = document.getElementById("q").value.trim().toLowerCase();
 
-  const mSel = document.getElementById("monthSelect");
-  const vSel = document.getElementById("vehicleSelect");
-  const months = getSelectedMonths();
-  const vehicles = getSelectedVehicles();
+  const monthCheckboxes = document.querySelectorAll("#monthDropdownMenu input[type='checkbox']");
+  const vehicleCheckboxes = document.querySelectorAll("#vehicleDropdownMenu input[type='checkbox']");
+
+  const months = Array.from(monthCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+  const vehicles = Array.from(vehicleCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
 
   const d = document.getElementById("dateExact").value;
-
   VIEW = ALL.filter(r => {
     const recMonth = String(r[COL.month] || "").trim();
     const recVeh   = String(r[COL.vehicle] || "").trim();
@@ -372,7 +347,7 @@ function applyFilters() {
       if (!r[COL.date]) byDate = false;
       else {
         const recordDate = new Date(r[COL.date]);
-        const exactDate  = new Date(d);
+        const exactDate = new Date(d);
         byDate = recordDate.toDateString() === exactDate.toDateString();
       }
     }
@@ -395,7 +370,6 @@ function updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers) {
     trips: byVehicleTrips[v] || 0,
     weightTon: (byVehicleWeight[v] || 0) / 1000
   }));
-
   const vsQuery=document.getElementById("vsSearch")?.value?.toLowerCase() || "";
   const vsSort=document.getElementById("vsSort")?.value || "weight";
   if(vsQuery){
@@ -425,7 +399,6 @@ function updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers) {
 function computeTimeSeries(agg, metric) {
   const map = {};
   const MONTH_ORDER = ["jan","feb","mar","apr","may","jun","july","aug","sep","oct","nov","dec"];
-
   VIEW.forEach(r => {
     let key = null;
     if (agg === 'day') {
@@ -444,10 +417,8 @@ function computeTimeSeries(agg, metric) {
     if (metric === 'weight') map[key] += toNumber(r[COL.weight]) / 1000;
     else map[key] += 1;
   });
-
   let labels = Object.keys(map);
   if (labels.length === 0) return { labels: [], values: [] };
-
   if (agg === 'day') {
     labels.sort((a,b)=> new Date(a) - new Date(b));
   } else {
@@ -507,7 +478,6 @@ function updateKPIs() {
   document.getElementById("k_avgDailyTrips").textContent  = avgDailyTrips.toFixed(1);
   document.getElementById("k_avgMonthlyWeight").textContent = avgMonthlyWeight.toFixed(2);
   document.getElementById("k_avgMonthlyTrips").textContent  = avgMonthlyTrips.toFixed(1);
-
   // per vehicle aggregates
   const byVehicleWeight = {};
   const byVehicleTrips  = {};
@@ -520,7 +490,6 @@ function updateKPIs() {
     if (!vehicleDrivers[v]) vehicleDrivers[v] = new Set();
     vehicleDrivers[v].add(d);
   });
-
   // vehicle summary table (if present in DOM)
   updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers);
 
@@ -530,7 +499,6 @@ function updateKPIs() {
     topVehicleWeight = Object.entries(byVehicleWeight).sort((a,b)=> b[1]-a[1])[0][0];
   }
   document.getElementById("k_topVehicleWeight").textContent = topVehicleWeight;
-
   let topVehicleTrips = "-";
   if (Object.keys(byVehicleTrips).length > 0) {
     topVehicleTrips = Object.entries(byVehicleTrips).sort((a,b)=> b[1]-a[1])[0][0];
@@ -558,7 +526,6 @@ function updateKPIs() {
   let vwQuery=document.getElementById("vwSearch").value.toLowerCase();
   let vwTopN=parseInt(document.getElementById("vwTopN").value||"10");
   weightEntries=weightEntries.filter(e=>e[0].toLowerCase().includes(vwQuery)).slice(0,vwTopN);
-
   // local filters Vehicle Trips
   let vtQuery=document.getElementById("vtSearch").value.toLowerCase();
   let vtTopN=parseInt(document.getElementById("vtTopN").value||"10");
@@ -566,7 +533,6 @@ function updateKPIs() {
 
   const labelsWeight = weightEntries.map(e=>e[0]);
   const dataWeightTon = weightEntries.map(e=> (e[1]/1000).toFixed(2));
-
   const labelsTrips = tripEntries.map(e=>{
     const v = e[0];
     const drivers = Array.from(vehicleDrivers[v]||[]).join(", ");
@@ -577,7 +543,6 @@ function updateKPIs() {
   // toggle chart visibility
   document.getElementById("chartWeightBox").style.display = labelsWeight.length > 1 ? "block" : "none";
   document.getElementById("chartTripsBox").style.display  = labelsTrips.length  > 1 ? "block" : "none";
-
   // bar chart
   if (labelsWeight.length > 1) {
     if (vehicleWeightChart) vehicleWeightChart.destroy();
@@ -649,7 +614,8 @@ function updateTable() {
 
 /* ===== تحليل السائقين ===== */
 function getDriverAggregates() {
-  const map = {}; // driver -> { trips, weightTon, vehicles: Set }
+  const map = {};
+  // driver -> { trips, weightTon, vehicles: Set }
   VIEW.forEach(r => {
     const d = r[COL.driver] || 'بدون سائق';
     const v = r[COL.vehicle] || 'مجهولة';
@@ -667,7 +633,6 @@ function getDriverAggregates() {
     vehCount: obj.vehicles.size,
     vehList: Array.from(obj.vehicles).join(', ')
   }));
-
   const q = document.getElementById('driverSearch').value.toLowerCase();
   if (q) rows = rows.filter(r => r.driver.toLowerCase().includes(q));
   const sortBy = document.getElementById('driverSort').value;
@@ -739,7 +704,8 @@ async function loadVehSheet(){
     renderVehAnalysis();
   }catch(e){
     console.error("خطأ تحميل شيت المركبات:",e);
-    vehiclesLoaded = true; // لا توقف الواجهة
+    vehiclesLoaded = true;
+    // لا توقف الواجهة
     maybeHideOverlay();
   }
 }
@@ -772,23 +738,31 @@ async function loadData() {
 
 /* ===== تعبئة القوائم المتعددة ===== */
 function fillMonthSelect() {
-  const sel = document.getElementById("monthSelect");
-  sel.innerHTML = "";
+  const menu = document.getElementById("monthDropdownMenu");
+  menu.innerHTML = "";
   const months = Array.from(new Set(ALL.map(r => r[COL.month]).filter(Boolean)));
   months.forEach(m => {
-    const opt = document.createElement("option");
-    opt.value = opt.textContent = m;
-    sel.appendChild(opt);
+    const div = document.createElement("div");
+    div.className = "px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2";
+    div.innerHTML = `
+      <input type="checkbox" id="month-${m}" value="${m}" class="form-checkbox h-4 w-4 text-blue-600 rounded">
+      <label for="month-${m}" class="text-sm cursor-pointer w-full">${m}</label>
+    `;
+    menu.appendChild(div);
   });
 }
 function fillVehicleSelect() {
-  const sel = document.getElementById("vehicleSelect");
-  sel.innerHTML = "";
+  const menu = document.getElementById("vehicleDropdownMenu");
+  menu.innerHTML = "";
   const vehicles = Array.from(new Set(ALL.map(r => r[COL.vehicle]).filter(Boolean)));
   vehicles.forEach(v => {
-    const opt = document.createElement("option");
-    opt.value = opt.textContent = v;
-    sel.appendChild(opt);
+    const div = document.createElement("div");
+    div.className = "px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2";
+    div.innerHTML = `
+      <input type="checkbox" id="vehicle-${v}" value="${v}" class="form-checkbox h-4 w-4 text-blue-600 rounded">
+      <label for="vehicle-${v}" class="text-sm cursor-pointer w-full">${v}</label>
+    `;
+    menu.appendChild(div);
   });
 }
 
@@ -805,13 +779,11 @@ function renderVehAnalysis(){
     byVehicleWeight[v]=(byVehicleWeight[v]||0)+toNumber(r[COL.weight]);
     byVehicleTrips[v]=(byVehicleTrips[v]||0)+1;
   });
-
   const vaQuery=document.getElementById("vaSearch").value.toLowerCase();
   const vaYearFilter=parseInt(document.getElementById("vaYear").value||"0");
   const vaSort=document.getElementById("vaSort").value;
 
   const vehicleData = [];
-
   VEHICLES.forEach(vh => {
     const vnum = String(vh["رقم المركبة"]||"");
     const year = parseInt(vh["سنة التصنيع"] || "0");
@@ -829,13 +801,11 @@ function renderVehAnalysis(){
 
     vehicleData.push({ vnum, year, capM3, capTon, trips, wton, eff });
   });
-
   vehicleData.sort((a, b) => {
     if (vaSort === "year") return b.year - a.year;
     else if (vaSort === "capTon") return b.capTon - a.capTon;
     else return b.eff - a.eff;
   });
-
   vehicleData.forEach(row => {
     const tr = document.createElement("tr");
     tr.className = "border-b hover:bg-gray-50";
@@ -862,7 +832,7 @@ function exportCSV() {
     (toNumber(r[COL.weight])/1000).toFixed(2),
     r[COL.vehicle] || ''
   ]);
-  const csv = [headers.join(','), ...rows.map(a=>a.join(','))].join('\\n');
+  const csv = [headers.join(','), ...rows.map(a=>a.join(','))].join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -916,7 +886,6 @@ async function exportPDF() {
   const pageHeight = doc.internal.pageSize.getHeight();
   const imgWidth = pageWidth - 40;
   const imgHeight = canvas.height * (imgWidth / canvas.width);
-
   if (imgHeight < pageHeight - 40) {
     doc.addImage(imgData, 'PNG', 20, 20, imgWidth, imgHeight);
   } else {
@@ -944,39 +913,18 @@ document.getElementById("dateExact").addEventListener("change", ()=>{ currentPag
 document.getElementById("resetBtn").addEventListener("click", () => {
   document.getElementById("q").value = "";
   document.getElementById("dateExact").value = "";
-  // امسح الاختيارات في القوائم المتعددة
-  Array.from(document.getElementById("monthSelect").options).forEach(o=>o.selected=false);
-  Array.from(document.getElementById("vehicleSelect").options).forEach(o=>o.selected=false);
+  document.querySelectorAll("#monthDropdownMenu input[type='checkbox']").forEach(o=>o.checked=false);
+  document.querySelectorAll("#vehicleDropdownMenu input[type='checkbox']").forEach(o=>o.checked=false);
+  updateDropdownButtonText('monthDropdownMenu', 'monthDropdownBtn', 'الشهور');
+  updateDropdownButtonText('vehicleDropdownMenu', 'vehicleDropdownBtn', 'المركبات');
   currentPage = 1;
   render();
 });
 document.getElementById("refreshBtn").addEventListener("click", () => { setLoading(true); dataLoaded=false; vehiclesLoaded=false; loadData(); loadVehSheet(); });
 
-// Multi-select events
-document.getElementById("monthSelect").addEventListener("change", ()=>{ currentPage=1; render(); });
-document.getElementById("vehicleSelect").addEventListener("change", ()=>{ currentPage=1; render(); });
-
-document.getElementById("monthSelectAll").addEventListener("click", ()=>{
-  Array.from(document.getElementById("monthSelect").options).forEach(o=>o.selected=true);
-  currentPage=1; render();
-});
-document.getElementById("monthClearAll").addEventListener("click", ()=>{
-  Array.from(document.getElementById("monthSelect").options).forEach(o=>o.selected=false);
-  currentPage=1; render();
-});
-document.getElementById("vehSelectAll").addEventListener("click", ()=>{
-  Array.from(document.getElementById("vehicleSelect").options).forEach(o=>o.selected=true);
-  currentPage=1; render();
-});
-document.getElementById("vehClearAll").addEventListener("click", ()=>{
-  Array.from(document.getElementById("vehicleSelect").options).forEach(o=>o.selected=false);
-  currentPage=1; render();
-});
-
 // سلاسل زمنية
 document.getElementById('tsAgg').addEventListener('change', updateTimeSeriesChart);
 document.getElementById('tsMetric').addEventListener('change', updateTimeSeriesChart);
-
 // أزرار تصدير
 document.getElementById('btnCSV').addEventListener('click', exportCSV);
 document.getElementById('btnXLSX').addEventListener('click', exportXLSX);
@@ -984,7 +932,7 @@ document.getElementById('btnPDF').addEventListener('click', exportPDF);
 document.getElementById('btnDriversCSV').addEventListener('click', ()=>{
   const rows = getDriverAggregates();
   const headers = ['السائق','عدد الرحلات','الوزن (طن)','متوسط/رحلة (طن)','عدد المركبات','المركبات'];
-  const csv = [headers.join(','), ...rows.map(r=>[r.driver,r.trips,r.weightTon,r.avgTon,r.vehCount,`"${r.vehList.replace(/"/g,'""')}"`].join(','))].join('\\n');
+  const csv = [headers.join(','), ...rows.map(r=>[r.driver,r.trips,r.weightTon,r.avgTon,r.vehCount,`"${r.vehList.replace(/"/g,'""')}"`].join(','))].join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1010,6 +958,75 @@ document.getElementById('prevPage2').addEventListener('click', ()=>{ if (current
 document.getElementById('nextPage2').addEventListener('click', ()=>{ const totalPages=Math.max(1, Math.ceil(VIEW.length / pageSize)); if (currentPage<totalPages){ currentPage++; updateTable(); } });
 document.getElementById('pageSize').addEventListener('change', (e)=>{ pageSize=parseInt(e.target.value||'25',10); currentPage=1; updateTable(); });
 
+/* ===== قوائم منسدلة جديدة ===== */
+function updateDropdownButtonText(menuId, buttonId, labelText) {
+  const menu = document.getElementById(menuId);
+  const button = document.getElementById(buttonId);
+  const selectedCheckboxes = Array.from(menu.querySelectorAll("input[type='checkbox']:checked"));
+  if (selectedCheckboxes.length === 0) {
+    button.textContent = `اختر ${labelText}...`;
+  } else if (selectedCheckboxes.length === menu.querySelectorAll("input[type='checkbox']").length) {
+    button.textContent = `كل ${labelText}`;
+  } else {
+    button.textContent = `${selectedCheckboxes.length} ${labelText} مختار`;
+  }
+}
+
+document.getElementById('monthDropdownBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const menu = document.getElementById('monthDropdownMenu');
+  menu.classList.toggle('hidden');
+});
+
+document.getElementById('vehicleDropdownBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const menu = document.getElementById('vehicleDropdownMenu');
+  menu.classList.toggle('hidden');
+});
+
+// إخفاء القوائم عند النقر خارجها
+window.addEventListener('click', (e) => {
+  if (!document.getElementById('monthDropdownBtn').contains(e.target)) {
+    document.getElementById('monthDropdownMenu').classList.add('hidden');
+  }
+  if (!document.getElementById('vehicleDropdownBtn').contains(e.target)) {
+    document.getElementById('vehicleDropdownMenu').classList.add('hidden');
+  }
+});
+
+// تحديث نص الأزرار عند تغيير الاختيار
+document.getElementById('monthDropdownMenu').addEventListener('change', () => {
+  updateDropdownButtonText('monthDropdownMenu', 'monthDropdownBtn', 'الشهور');
+  render();
+});
+document.getElementById('vehicleDropdownMenu').addEventListener('change', () => {
+  updateDropdownButtonText('vehicleDropdownMenu', 'vehicleDropdownBtn', 'المركبات');
+  render();
+});
+
+// تعديل وظائف تحديد الكل ومسح الكل
+document.getElementById('monthSelectAll').addEventListener('click', () => {
+  document.querySelectorAll("#monthDropdownMenu input[type='checkbox']").forEach(cb => cb.checked = true);
+  updateDropdownButtonText('monthDropdownMenu', 'monthDropdownBtn', 'الشهور');
+  render();
+});
+document.getElementById('monthClearAll').addEventListener('click', () => {
+  document.querySelectorAll("#monthDropdownMenu input[type='checkbox']").forEach(cb => cb.checked = false);
+  updateDropdownButtonText('monthDropdownMenu', 'monthDropdownBtn', 'الشهور');
+  render();
+});
+document.getElementById('vehSelectAll').addEventListener('click', () => {
+  document.querySelectorAll("#vehicleDropdownMenu input[type='checkbox']").forEach(cb => cb.checked = true);
+  updateDropdownButtonText('vehicleDropdownMenu', 'vehicleDropdownBtn', 'المركبات');
+  render();
+});
+document.getElementById('vehClearAll').addEventListener('click', () => {
+  document.querySelectorAll("#vehicleDropdownMenu input[type='checkbox']").forEach(cb => cb.checked = false);
+  updateDropdownButtonText('vehicleDropdownMenu', 'vehicleDropdownBtn', 'المركبات');
+  render();
+});
+
+
 /* ===== Render شامل ===== */
 function render() {
   applyFilters();
@@ -1020,59 +1037,6 @@ function render() {
 
 /* تسجيل بلجن الداتا ليبلز */
 if (window.ChartDataLabels) { Chart.register(ChartDataLabels); }
-
-
-function fillMonthSelect() {
-  const container = document.getElementById("monthDropdown");
-  container.innerHTML = "";
-  const months = Array.from(new Set(ALL.map(r => r[COL.month]).filter(Boolean)));
-  months.forEach(m => {
-    const div = document.createElement("div");
-    div.className = "px-3 py-1 hover:bg-gray-100 flex items-center gap-2";
-    div.innerHTML = `<input type="checkbox" value="${m}" class="monthCheck"> ${m}`;
-    container.appendChild(div);
-  });
-  container.querySelectorAll(".monthCheck").forEach(cb => {
-    cb.addEventListener("change", ()=>{ currentPage=1; render(); });
-  });
-}
-function fillVehicleSelect() {
-  const container = document.getElementById("vehDropdown");
-  container.innerHTML = "";
-  const vehicles = Array.from(new Set(ALL.map(r => r[COL.vehicle]).filter(Boolean)));
-  vehicles.forEach(v => {
-    const div = document.createElement("div");
-    div.className = "px-3 py-1 hover:bg-gray-100 flex items-center gap-2";
-    div.innerHTML = `<input type="checkbox" value="${v}" class="vehCheck"> ${v}`;
-    container.appendChild(div);
-  });
-  container.querySelectorAll(".vehCheck").forEach(cb => {
-    cb.addEventListener("change", ()=>{ currentPage=1; render(); });
-  });
-}
-function getSelectedMonths(){ return Array.from(document.querySelectorAll(".monthCheck:checked")).map(cb => cb.value); }
-function getSelectedVehicles(){ return Array.from(document.querySelectorAll(".vehCheck:checked")).map(cb => cb.value); }
-
-// تحديث الفلاتر
-document.getElementById("monthSelectAll").addEventListener("click", ()=>{
-  document.querySelectorAll(".monthCheck").forEach(cb=>cb.checked=true); render();
-});
-document.getElementById("monthClearAll").addEventListener("click", ()=>{
-  document.querySelectorAll(".monthCheck").forEach(cb=>cb.checked=false); render();
-});
-document.getElementById("vehSelectAll").addEventListener("click", ()=>{
-  document.querySelectorAll(".vehCheck").forEach(cb=>cb.checked=true); render();
-});
-document.getElementById("vehClearAll").addEventListener("click", ()=>{
-  document.querySelectorAll(".vehCheck").forEach(cb=>cb.checked=false); render();
-});
-
-document.getElementById("monthDropdownBtn").addEventListener("click", ()=>{
-  document.getElementById("monthDropdown").classList.toggle("show");
-});
-document.getElementById("vehDropdownBtn").addEventListener("click", ()=>{
-  document.getElementById("vehDropdown").classList.toggle("show");
-});
 
 /* ===== Start ===== */
 document.addEventListener("DOMContentLoaded", ()=>{
