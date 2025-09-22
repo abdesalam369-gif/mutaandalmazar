@@ -470,15 +470,19 @@ function updateKPIs() {
   document.getElementById("k_avg").textContent    = formatTonFromKg(avgWkg) + " طن";
   document.getElementById("k_drivers").textContent= drivers.size.toLocaleString();
 
-  // إجمالي كلفة الوقود (تفاعلي حسب المركبات الظاهرة)
+  // إجمالي كلفة الوقود (تفاعلي حسب المركبات والشهور)
   const visibleVehicles = new Set(VIEW.map(r => r[COL.vehicle]).filter(Boolean));
+  const monthCheckboxes = document.querySelectorAll("#monthDropdownMenu input[type='checkbox']");
+  const selectedMonths = Array.from(monthCheckboxes).filter(cb => cb.checked).map(cb => cb.value.toLowerCase());
   let totalFuelCost = 0;
   FUEL.forEach(f => {
     const vnum = String(f["رقم المركبة"] || "").trim();
     if (!vnum || !visibleVehicles.has(vnum)) return;
     const months = ["jan","feb","mar","apr","may","jun","july","aug","sep","oct","nov","dec"];
     months.forEach(m => {
-      if (f[m]) totalFuelCost += toNumber(f[m]);
+      if (f[m] && (selectedMonths.length === 0 || selectedMonths.includes(m))) {
+        totalFuelCost += toNumber(f[m]);
+      }
     });
   });
   const fuelNode = document.getElementById("k_totalFuelCost");
