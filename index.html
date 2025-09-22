@@ -152,7 +152,9 @@
       <canvas id="vehicleTripsChart" height="120"></canvas>
     </div>
 
-    <div id="vehAnalysisBox" class="bg-white rounded-xl shadow overflow-hidden mt-6 mb-6">
+    <div class="bg-white rounded-xl shadow mb-4">
+  <button onclick="toggleSection('vehAnalysisBox')" class="w-full text-right px-4 py-2 bg-gray-100 font-semibold">تحليل كفاءة المركبات</button>
+  <div id="vehAnalysisBox" class="p-4 hidden">
       <div class="p-4 border-b">
         <div class="flex flex-wrap items-center gap-3 mb-4">
           <label class="text-sm">بحث:</label>
@@ -204,7 +206,9 @@
       <button id="btnDriversCSV" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">تصدير CSV (تحليل السائقين)</button>
     </div>
 
-    <div id="driversBox" class="bg-white rounded-xl shadow p-6 mb-6">
+    <div class="bg-white rounded-xl shadow mb-4">
+  <button onclick="toggleSection('driversBox')" class="w-full text-right px-4 py-2 bg-gray-100 font-semibold">تحليل السائقين</button>
+  <div id="driversBox" class="p-4 hidden">
       <div class="flex flex-wrap items-center gap-3 mb-4">
         <h3 class="font-semibold">تحليل السائقين</h3>
         <label class="text-sm">الترتيب</label>
@@ -236,7 +240,9 @@
       </div>
     </div>
 
-    <div id="rawTripsBox" class="bg-white rounded-xl shadow overflow-hidden">
+    <div class="bg-white rounded-xl shadow mb-4">
+  <button onclick="toggleSection('rawTripsBox')" class="w-full text-right px-4 py-2 bg-gray-100 font-semibold">سجل الرحلات</button>
+  <div id="rawTripsBox" class="p-4 hidden">
       <div class="p-4 border-b">
         <h3 class="font-semibold">سجل الرحلات</h3>
       </div>
@@ -1157,6 +1163,12 @@ function render() {
 
 /* تسجيل بلجن الداتا ليبلز */
 if (window.ChartDataLabels) { Chart.register(ChartDataLabels); }
+
+
+function toggleSection(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle("hidden");
+}
 
 /* ===== Start ===== */
 document.addEventListener("DOMContentLoaded", ()=>{
