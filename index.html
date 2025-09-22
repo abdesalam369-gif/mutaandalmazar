@@ -114,7 +114,9 @@
       </div>
     </div>
 
-    <div id="timeSeriesBox" class="bg-white rounded-xl shadow p-6 mb-6">
+    <div class="bg-white rounded-xl shadow mb-4">
+  <button onclick="toggleSection('timeSeriesBox')" class="w-full text-right px-4 py-2 bg-gray-100 font-semibold flex justify-between items-center"><span>السلاسل الزمنية</span><span id="icon-timeSeriesBox">▶</span></button>
+  <div id="timeSeriesBox" class="p-6 hidden">
       <div class="flex flex-wrap items-center gap-3 mb-4">
         <h3 class="font-semibold">السلاسل الزمنية</h3>
         <select id="tsAgg" class="border rounded-lg px-3 py-2">
@@ -126,11 +128,14 @@
           <option value="trips">الرحلات</option>
         </select>
       </div>
+</div>
       <canvas id="timeSeriesChart" height="120"></canvas>
       <p class="text-xs text-gray-500 mt-2">* قد تُستثنى السجلات بلا تاريخ من الرسم اليومي.</p>
     </div>
 
-    <div id="chartWeightBox" class="bg-white rounded-xl shadow p-6 mb-6">
+    <div class="bg-white rounded-xl shadow mb-4">
+  <button onclick="toggleSection('chartWeightBox')" class="w-full text-right px-4 py-2 bg-gray-100 font-semibold flex justify-between items-center"><span>وزن النقل حسب المركبة (بالطن)</span><span id="icon-chartWeightBox">▶</span></button>
+  <div id="chartWeightBox" class="p-6 hidden">
       <h3 class="mb-2 font-semibold">وزن النقل حسب المركبة (بالطن)</h3>
       <div class="flex flex-wrap items-center gap-3 mb-4">
         <label class="text-sm">بحث عن مركبة:</label>
@@ -138,10 +143,13 @@
         <label class="text-sm">Top N:</label>
         <input id="vwTopN" type="number" min="1" value="10" class="w-24 border rounded-lg px-3 py-1">
       </div>
+</div>
       <canvas id="vehicleWeightChart" height="120"></canvas>
     </div>
 
-    <div id="chartTripsBox" class="bg-white rounded-xl shadow p-6 mb-6">
+    <div class="bg-white rounded-xl shadow mb-4">
+  <button onclick="toggleSection('chartTripsBox')" class="w-full text-right px-4 py-2 bg-gray-100 font-semibold flex justify-between items-center"><span>نسبة عدد الرحلات لكل مركبة</span><span id="icon-chartTripsBox">▶</span></button>
+  <div id="chartTripsBox" class="p-6 hidden">
       <h3 class="mb-2 font-semibold">نسبة عدد الرحلات لكل مركبة</h3>
       <div class="flex flex-wrap items-center gap-3 mb-4">
         <label class="text-sm">بحث عن مركبة:</label>
@@ -149,11 +157,12 @@
         <label class="text-sm">Top N:</label>
         <input id="vtTopN" type="number" min="1" value="10" class="w-24 border rounded-lg px-3 py-1">
       </div>
+</div>
       <canvas id="vehicleTripsChart" height="120"></canvas>
     </div>
 
     <div class="bg-white rounded-xl shadow mb-4">
-  <button onclick="toggleSection('vehAnalysisBox')" class="w-full text-right px-4 py-2 bg-gray-100 font-semibold">تحليل كفاءة المركبات</button>
+  <button onclick="toggleSection('vehAnalysisBox')" class="w-full text-right px-4 py-2 bg-gray-100 font-semibold flex justify-between items-center"><span>تحليل كفاءة المركبات</span><span id="icon-vehAnalysisBox">▶</span></button>
   <div id="vehAnalysisBox" class="p-6 hidden">
       <div class="p-4 border-b">
         <div class="flex flex-wrap items-center gap-3 mb-4">
@@ -208,7 +217,9 @@
     </div>
 
     <div class="bg-white rounded-xl shadow mb-4">
-  <button onclick="toggleSection('driversBox')" class="w-full text-right px-4 py-2 bg-gray-100 font-semibold">تحليل السائقين</button>
+  <button onclick="toggleSection('driversBox')" class="w-full text-right px-4 py-2 bg-gray-100 font-semibold flex justify-between items-center"><span>تحليل السائقين</span><span id="icon-driversBox">▶</span></button>
+  <div class="bg-white rounded-xl shadow mb-4">
+  <button onclick="toggleSection('driversBox')" class="w-full text-right px-4 py-2 bg-gray-100 font-semibold flex justify-between items-center"><span>تحليل السائقين</span><span id="icon-driversBox">▶</span></button>
   <div id="driversBox" class="p-6 hidden">
       <div class="flex flex-wrap items-center gap-3 mb-4">
         <h3 class="font-semibold">تحليل السائقين</h3>
@@ -223,6 +234,7 @@
         <label class="text-sm">بحث عن سائق</label>
         <input id="driverSearch" type="text" placeholder="اسم السائق" class="border rounded-lg px-3 py-2">
       </div>
+</div>
 </div>
       <canvas id="driverChart" height="120" class="mb-6"></canvas>
       <div class="overflow-x-auto">
@@ -243,7 +255,7 @@
     </div>
 
     <div class="bg-white rounded-xl shadow mb-4">
-  <button onclick="toggleSection('rawTripsBox')" class="w-full text-right px-4 py-2 bg-gray-100 font-semibold">سجل الرحلات</button>
+  <button onclick="toggleSection('rawTripsBox')" class="w-full text-right px-4 py-2 bg-gray-100 font-semibold flex justify-between items-center"><span>سجل الرحلات</span><span id="icon-rawTripsBox">▶</span></button>
   <div id="rawTripsBox" class="p-6 hidden">
       <div class="p-4 border-b">
         <h3 class="font-semibold">سجل الرحلات</h3>
@@ -1170,7 +1182,10 @@ if (window.ChartDataLabels) { Chart.register(ChartDataLabels); }
 
 function toggleSection(id) {
   const el = document.getElementById(id);
+  const icon = document.getElementById("icon-" + id);
+  const isHidden = el.classList.contains("hidden");
   el.classList.toggle("hidden");
+  if (icon) icon.textContent = isHidden ? "▼" : "▶";
 }
 
 /* ===== Start ===== */
