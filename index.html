@@ -42,7 +42,7 @@
 
       <div>
         <div class="flex items-center justify-between">
-          <label class="block text-sm mb-1">الشهور (اختيار متعدد)</label>
+          <label class="block text-sm mb-1">الشهور </label>
           <div class="flex gap-2 text-xs">
             <button id="monthSelectAll" class="px-2 py-1 rounded border hover:bg-gray-50">تحديد الكل</button>
             <button id="monthClearAll" class="px-2 py-1 rounded border hover:bg-gray-50">مسح</button>
@@ -57,7 +57,7 @@
 
       <div>
         <div class="flex items-center justify-between">
-          <label class="block text-sm mb-1">أرقام المركبات (اختيار متعدد)</label>
+          <label class="block text-sm mb-1">أرقام المركبات </label>
           <div class="flex gap-2 text-xs">
             <button id="vehSelectAll" class="px-2 py-1 rounded border hover:bg-gray-50">تحديد الكل</button>
             <button id="vehClearAll" class="px-2 py-1 rounded border hover:bg-gray-50">مسح</button>
@@ -114,9 +114,7 @@
       </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow mb-4">
-  <div class="flex justify-between items-center px-4 py-2 bg-gray-100"><h3 class="font-semibold">السلاسل الزمنية</h3><button onclick="toggleSection('timeSeriesBox')" id="btn-timeSeriesBox">▶</button></div>
-  <div id="timeSeriesBox" class="p-6 hidden">
+    <div id="timeSeriesBox" class="bg-white rounded-xl shadow p-6 mb-6">
       <div class="flex flex-wrap items-center gap-3 mb-4">
         <h3 class="font-semibold">السلاسل الزمنية</h3>
         <select id="tsAgg" class="border rounded-lg px-3 py-2">
@@ -128,14 +126,11 @@
           <option value="trips">الرحلات</option>
         </select>
       </div>
-</div>
       <canvas id="timeSeriesChart" height="120"></canvas>
       <p class="text-xs text-gray-500 mt-2">* قد تُستثنى السجلات بلا تاريخ من الرسم اليومي.</p>
     </div>
 
-    <div class="bg-white rounded-xl shadow mb-4">
-  <div class="flex justify-between items-center px-4 py-2 bg-gray-100"><h3 class="font-semibold">وزن النقل حسب المركبة (بالطن)</h3><button onclick="toggleSection('chartWeightBox')" id="btn-chartWeightBox">▶</button></div>
-  <div id="chartWeightBox" class="p-6 hidden">
+    <div id="chartWeightBox" class="bg-white rounded-xl shadow p-6 mb-6">
       <h3 class="mb-2 font-semibold">وزن النقل حسب المركبة (بالطن)</h3>
       <div class="flex flex-wrap items-center gap-3 mb-4">
         <label class="text-sm">بحث عن مركبة:</label>
@@ -143,13 +138,10 @@
         <label class="text-sm">Top N:</label>
         <input id="vwTopN" type="number" min="1" value="10" class="w-24 border rounded-lg px-3 py-1">
       </div>
-</div>
       <canvas id="vehicleWeightChart" height="120"></canvas>
     </div>
 
-    <div class="bg-white rounded-xl shadow mb-4">
-  <div class="flex justify-between items-center px-4 py-2 bg-gray-100"><h3 class="font-semibold">نسبة عدد الرحلات لكل مركبة</h3><button onclick="toggleSection('chartTripsBox')" id="btn-chartTripsBox">▶</button></div>
-  <div id="chartTripsBox" class="p-6 hidden">
+    <div id="chartTripsBox" class="bg-white rounded-xl shadow p-6 mb-6">
       <h3 class="mb-2 font-semibold">نسبة عدد الرحلات لكل مركبة</h3>
       <div class="flex flex-wrap items-center gap-3 mb-4">
         <label class="text-sm">بحث عن مركبة:</label>
@@ -157,13 +149,10 @@
         <label class="text-sm">Top N:</label>
         <input id="vtTopN" type="number" min="1" value="10" class="w-24 border rounded-lg px-3 py-1">
       </div>
-</div>
       <canvas id="vehicleTripsChart" height="120"></canvas>
     </div>
 
-    <div class="bg-white rounded-xl shadow mb-4">
-  <div class="flex justify-between items-center px-4 py-2 bg-gray-100"><h3 class="font-semibold">تحليل كفاءة المركبات</h3><button onclick="toggleSection('vehAnalysisBox')" id="btn-vehAnalysisBox">▶</button></div>
-  <div id="vehAnalysisBox" class="p-6 hidden">
+    <div id="vehAnalysisBox" class="bg-white rounded-xl shadow overflow-hidden mt-6 mb-6">
       <div class="p-4 border-b">
         <div class="flex flex-wrap items-center gap-3 mb-4">
           <label class="text-sm">بحث:</label>
@@ -183,7 +172,6 @@
             <option value="year">سنة التصنيع</option>
           </select>
         </div>
-</div>
         <h3 class="font-semibold">تحليل كفاءة المركبات</h3>
       </div>
       <div class="overflow-x-auto">
@@ -216,9 +204,7 @@
       <button id="btnDriversCSV" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">تصدير CSV (تحليل السائقين)</button>
     </div>
 
-    <div class="bg-white rounded-xl shadow mb-4">
-  <div class="flex justify-between items-center px-4 py-2 bg-gray-100"><h3 class="font-semibold">تحليل السائقين</h3><button onclick="toggleSection('driversBox')" id="btn-driversBox">▶</button></div>
-  <div id="driversBox" class="p-6 hidden">
+    <div id="driversBox" class="bg-white rounded-xl shadow p-6 mb-6">
       <div class="flex flex-wrap items-center gap-3 mb-4">
         <h3 class="font-semibold">تحليل السائقين</h3>
         <label class="text-sm">الترتيب</label>
@@ -232,7 +218,6 @@
         <label class="text-sm">بحث عن سائق</label>
         <input id="driverSearch" type="text" placeholder="اسم السائق" class="border rounded-lg px-3 py-2">
       </div>
-</div>
       <canvas id="driverChart" height="120" class="mb-6"></canvas>
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm text-right">
@@ -251,13 +236,10 @@
       </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow mb-4">
-  <div class="flex justify-between items-center px-4 py-2 bg-gray-100"><h3 class="font-semibold">سجل الرحلات</h3><button onclick="toggleSection('rawTripsBox')" id="btn-rawTripsBox">▶</button></div>
-  <div id="rawTripsBox" class="p-6 hidden">
+    <div id="rawTripsBox" class="bg-white rounded-xl shadow overflow-hidden">
       <div class="p-4 border-b">
         <h3 class="font-semibold">سجل الرحلات</h3>
       </div>
-</div>
 
       <div class="p-4 flex flex-wrap items-center gap-3">
         <label class="text-sm">عدد الصفوف في الصفحة</label>
@@ -1175,15 +1157,6 @@ function render() {
 
 /* تسجيل بلجن الداتا ليبلز */
 if (window.ChartDataLabels) { Chart.register(ChartDataLabels); }
-
-
-function toggleSection(id) {
-  const el = document.getElementById(id);
-  const btn = document.getElementById("btn-" + id);
-  const isHidden = el.classList.contains("hidden");
-  el.classList.toggle("hidden");
-  if (btn) btn.textContent = isHidden ? "▼" : "▶";
-}
 
 /* ===== Start ===== */
 document.addEventListener("DOMContentLoaded", ()=>{
