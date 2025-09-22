@@ -88,6 +88,11 @@
       <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">إجمالي الوزن</p><h3 id="k_weight" class="text-2xl font-bold text-green-600">0</h3></div>
       <!-- بطاقة جديدة: إجمالي كلفة الوقود -->
       <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">إجمالي كلفة الوقود</p><h3 id="k_totalFuelCost" class="text-2xl font-bold text-teal-600">0</h3></div>
+      <!-- بطاقة جديدة: إجمالي كلفة الصيانة -->
+      <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">إجمالي كلفة الصيانة</p><h3 id="k_totalMaintenanceCost" class="text-2xl font-bold text-rose-600">0</h3></div>
+      <!-- بطاقة جديدة: عدد المركبات -->
+      <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">عدد المركبات</p><h3 id="k_vehicleCount" class="text-2xl font-bold text-yellow-600">0</h3></div>
+
       <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">متوسط حمولة الرحلة</p><h3 id="k_avg" class="text-2xl font-bold text-purple-600">0</h3></div>
       <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">عدد السائقين</p><h3 id="k_drivers" class="text-2xl font-bold text-orange-600">0</h3></div>
       <div class="bg-white rounded-xl shadow p-6"><p class="text-gray-500">أكثر مركبة (وزن)</p><h3 id="k_topVehicleWeight" class="text-xl font-bold text-red-600">-</h3></div>
@@ -478,6 +483,21 @@ function updateKPIs() {
   });
   const fuelNode = document.getElementById("k_totalFuelCost");
   if (fuelNode) fuelNode.textContent = totalFuelCost.toFixed(2);
+  // إجمالي كلفة الصيانة (تفاعلي حسب المركبات الظاهرة)
+  let totalMaintenanceCost = 0;
+  MAINTENANCE.forEach(m => {
+    const vnum = String(m["رقم المركبة"] || "").trim();
+    if (!vnum || !visibleVehicles.has(vnum)) return;
+    if (m["كلفة الصيانة"]) totalMaintenanceCost += toNumber(m["كلفة الصيانة"]);
+  });
+  const maintNode = document.getElementById("k_totalMaintenanceCost");
+  if (maintNode) maintNode.textContent = totalMaintenanceCost.toFixed(2);
+
+  // عدد المركبات
+  const vehicleCount = visibleVehicles.size;
+  const vehNode = document.getElementById("k_vehicleCount");
+  if (vehNode) vehNode.textContent = vehicleCount.toLocaleString();
+
 
   const uniqueDays = new Set(VIEW.map(r => r[COL.date]).filter(Boolean));
   const daysCount = uniqueDays.size;
