@@ -104,7 +104,7 @@
         <div class="relative">
           <button id="monthDropdownBtn" class="w-full text-right border rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300">اختر الشهور... <span id="monthCount" class="text-blue-500 text-xs mr-2"></span></button>
           <div id="monthDropdownMenu" class="absolute hidden top-full left-0 z-10 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto mt-1">
-            </div>
+          </div>
         </div>
       </div>
 
@@ -164,7 +164,6 @@
       </div>
     </div>
 
-    <!-- Time Series Section -->
     <div class="collapsible-section">
       <div class="collapsible-header" data-target="timeSeriesContent">
         <h3>السلاسل الزمنية</h3>
@@ -188,7 +187,6 @@
       </div>
     </div>
 
-    <!-- Vehicle Weight Section -->
     <div class="collapsible-section">
       <div class="collapsible-header" data-target="vehicleWeightContent">
         <h3>وزن النقل حسب المركبة (بالطن)</h3>
@@ -207,7 +205,6 @@
       </div>
     </div>
 
-    <!-- Trip Distribution Section -->
     <div class="collapsible-section">
       <div class="collapsible-header" data-target="tripDistributionContent">
         <h3>نسبة عدد الرحلات لكل مركبة</h3>
@@ -226,7 +223,6 @@
       </div>
     </div>
 
-    <!-- Vehicle Efficiency Analysis Section -->
     <div class="collapsible-section">
       <div class="collapsible-header" data-target="vehicleEfficiencyContent">
         <h3>تحليل كفاءة المركبات</h3>
@@ -284,7 +280,6 @@
       <button id="btnDriversCSV" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">تصدير CSV (تحليل السائقين)</button>
     </div>
 
-    <!-- Driver Analysis Section -->
     <div class="collapsible-section">
       <div class="collapsible-header" data-target="driverAnalysisContent">
         <h3>تحليل السائقين</h3>
@@ -324,7 +319,6 @@
       </div>
     </div>
 
-    <!-- Trip Log Section -->
     <div class="collapsible-section">
       <div class="collapsible-header" data-target="tripLogContent">
         <h3>سجل الرحلات</h3>
@@ -383,7 +377,6 @@
       weight: "صافي التحميل",
       vehicle: "رقم المركبة"
     };
-
     const VEH_COLS = {
       plate: "رقم المركبة",
       driver: "السائق",
@@ -391,13 +384,11 @@
       capacity: "السعة",
       capTon: "السعة النظرية"
     };
-
     const FUEL_COLS = {
       plate: "رقم المركبة",
       jan: "jan", feb: "feb", mar: "mar", apr: "apr", may: "may", jun: "jun",
       july: "july", aug: "aug", sep: "sep", oct: "oct", nov: "nov", dec: "dec"
     };
-
     const MAINT_COLS = {
       plate: "رقم المركبة",
       cost: "كلفة الصيانة"
@@ -419,19 +410,28 @@
     let vehicleTripsChart  = null;
     let timeSeriesChart    = null;
     let driverChart        = null;
+    let currentPage = 1;
+    let pageSize = 25;
+    const MONTH_NAMES = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+    
     /* تحميل/تعطيل */
     let dataLoaded = false, vehiclesLoaded = false, fuelLoaded = false, maintenanceLoaded = false;
     const controlsSelector = 'input, select, button';
-    function setLoading(state) {
+    function setLoading(state, msg = '') {
       const overlay = document.getElementById('loadingOverlay');
+      const message = document.getElementById('loadingMessage');
       overlay.style.display = state ? 'flex' : 'none';
+      message.textContent = msg;
       document.querySelectorAll(controlsSelector).forEach(el => {
         if (el.id === 'refreshBtn') return; // اسمح بالتحديث دائماً
         el.disabled = state;
       });
     }
+
     function maybeHideOverlay() {
-      if (dataLoaded && vehiclesLoaded && fuelLoaded && maintenanceLoaded) setLoading(false);
+      if (dataLoaded && vehiclesLoaded && fuelLoaded && maintenanceLoaded) {
+        setLoading(false);
+      }
     }
 
     /* أدوات مساعدة */
@@ -444,23 +444,20 @@
       const n = parseFloat(s);
       return isNaN(n) ? 0 : n;
     }
-    const KG_TO_TON_DIV = 1000; // Default to 1000 for kg to ton conversion
-
+    const KG_TO_TON_DIV = 1000;
+    // Default to 1000 for kg to ton conversion
     function formatTonFromKg(kg) {
       const t = kg / KG_TO_TON_DIV;
       return t.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
+    
     function parseDate(dateString) {
       if (!dateString) return null;
       let s = String(dateString).trim();
-      const arabicMap = {
-        '٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'
-      };
+      const arabicMap = { '٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9' };
       s = s.replace(/[٠-٩]/g, d => arabicMap[d] || d);
-
       let date = new Date(s);
       if (!isNaN(date.getTime())) return date;
-
       // Try DD/MM/YYYY format
       const parts = s.split(/[-\/]/);
       if (parts.length === 3) {
@@ -477,10 +474,24 @@
       const d = String(dt.getDate()).padStart(2,'0');
       return `${y}-${m}-${d}`;
     }
+    
     function toYM(dt) {
       return MONTH_NAMES[dt.getMonth()];
     }
 
+    function showToast(message, type = 'success', duration = 3000) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `p-4 mb-2 text-sm text-white rounded-lg shadow-lg ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+      toast.textContent = message;
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s ease-in-out';
+      container.appendChild(toast);
+      setTimeout(() => { toast.style.opacity = '1'; }, 10);
+      setTimeout(() => { toast.style.opacity = '0'; }, duration);
+      setTimeout(() => { toast.remove(); }, duration + 500);
+    }
+    
     /* ===== فلترة ===== */
     function applyFilters() {
       const q = document.getElementById("q").value.trim().toLowerCase();
@@ -489,28 +500,36 @@
       const months = Array.from(monthCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
       const vehicles = Array.from(vehicleCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
       const d = document.getElementById("dateExact").value;
+      
       currentPage = 1; // Reset pagination when filters are applied
+      
       VIEW = ALL.filter(r => {
         const recMonth = String(r[COL.month] || "").trim();
-        const recVeh   = String(r[COL.vehicle] || "").trim();
-        const byMonth   = months.length ? months.includes(recMonth) : true;
+        const recVeh = String(r[COL.vehicle] || "").trim();
+        
+        const byMonth = months.length ? months.includes(recMonth) : true;
         const byVehicle = vehicles.length ? vehicles.includes(recVeh) : true;
+        
         let byDate = true;
         if (d) {
           if (!r[COL.date]) byDate = false;
           else {
-            const recordDate = new Date(r[COL.date]);
+            const recordDate = parseDate(r[COL.date]);
             const exactDate = new Date(d);
-            byDate = recordDate.toDateString() === exactDate.toDateString();
+            byDate = recordDate && recordDate.toDateString() === exactDate.toDateString();
           }
         }
+        
         if (!byMonth || !byVehicle || !byDate) return false;
+        
         if (!q) return true;
         const hay = [r[COL.month], r[COL.date], r[COL.driver], r[COL.weight], r[COL.vehicle]].map(x => (x==null?"":String(x))).join(" ").toLowerCase();
         return hay.includes(q);
       });
+      
+      renderUI();
     }
-
+    
     /* ===== ملخص المركبات ===== */
     function updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers) {
       const vehiclesSet = new Set([...Object.keys(byVehicleTrips), ...Object.keys(byVehicleWeight)]);
@@ -520,16 +539,59 @@
         trips: byVehicleTrips[v] || 0,
         weightTon: (byVehicleWeight[v] || 0) / 1000
       }));
-      const vsQuery=document.getElementById("vsSearch")?.value?.toLowerCase() || "";
-      const vsSort=document.getElementById("vsSort")?.value || "weight";
-      if(vsQuery){
-        summary=summary.filter(r=>r.vehicle.toLowerCase().includes(vsQuery)||r.drivers.join(", ").toLowerCase().includes(vsQuery));
-      }
-      if(vsSort==="weight"){ summary.sort((a,b)=>b.weightTon-a.weightTon);
-      }
-      else if(vsSort==="trips"){ summary.sort((a,b)=>b.trips-a.trips); }
+      
+      const vsQuery = document.getElementById("vaSearch")?.value?.toLowerCase() || "";
+      const vsYear = toNumber(document.getElementById("vaYear")?.value) || 0;
+      const vsSort = document.getElementById("vaSort")?.value || "eff";
 
-      const tbody = document.getElementById("vehicleSummary");
+      // دمج بيانات المركبات مع الملخص
+      summary = summary.map(item => {
+        const vehicleData = VEHICLES.find(v => v[VEH_COLS.plate] === item.vehicle) || {};
+        return {
+          ...item,
+          year: toNumber(vehicleData[VEH_COLS.year]),
+          capacity: toNumber(vehicleData[VEH_COLS.capacity]),
+          capTon: toNumber(vehicleData[VEH_COLS.capTon]),
+          fuelCost: toNumber(FUEL.find(f => f[FUEL_COLS.plate] === item.vehicle)?.jan), // مثال، يجب أن يكون ديناميكي
+          maintenanceCost: toNumber(MAINTENANCE.find(m => m[MAINT_COLS.plate] === item.vehicle)?.cost)
+        };
+      });
+
+      // Filter by search query
+      if (vsQuery) {
+        summary = summary.filter(r => r.vehicle.toLowerCase().includes(vsQuery) || r.drivers.join(", ").toLowerCase().includes(vsQuery));
+      }
+
+      // Filter by year
+      if (vsYear) {
+        summary = summary.filter(r => r.year >= vsYear);
+      }
+
+      // حساب الكفاءة والتكاليف
+      summary = summary.map(row => {
+        const costPerTrip = (row.fuelCost + row.maintenanceCost) / row.trips || 0;
+        const costPerTon = (row.fuelCost + row.maintenanceCost) / row.weightTon || 0;
+        const efficiency = (row.weightTon / row.capTon) * 100 || 0;
+        return {
+          ...row,
+          costPerTrip: costPerTrip,
+          costPerTon: costPerTon,
+          eff: efficiency
+        };
+      });
+
+      // Sort
+      if (vsSort === "eff") { summary.sort((a,b)=>b.eff-a.eff); }
+      else if (vsSort === "fuelCost") { summary.sort((a,b)=>b.fuelCost-a.fuelCost); }
+      else if (vsSort === "maintenanceCost") { summary.sort((a,b)=>b.maintenanceCost-a.maintenanceCost); }
+      else if (vsSort === "costPerTrip") { summary.sort((a,b)=>b.costPerTrip-a.costPerTrip); }
+      else if (vsSort === "costPerTon") { summary.sort((a,b)=>b.costPerTon-a.costPerTon); }
+      else if (vsSort === "capTon") { summary.sort((a,b)=>b.capTon-a.capTon); }
+      else if (vsSort === "trips") { summary.sort((a,b)=>b.trips-a.trips); }
+      else if (vsSort === "wton") { summary.sort((a,b)=>b.weightTon-a.weightTon); }
+      else if (vsSort === "year") { summary.sort((a,b)=>b.year-a.year); }
+
+      const tbody = document.getElementById("vehAnalysisTable");
       if (!tbody) return;
       tbody.innerHTML = "";
       summary.forEach(row => {
@@ -538,955 +600,529 @@
         tr.innerHTML = `
           <td class="px-4 py-2">${row.vehicle}</td>
           <td class="px-4 py-2">${row.drivers.join(", ")}</td>
+          <td class="px-4 py-2">${row.year || 'N/A'}</td>
+          <td class="px-4 py-2">${row.capacity || 'N/A'}</td>
+          <td class="px-4 py-2">${formatTonFromKg(row.capTon * 1000)}</td>
           <td class="px-4 py-2">${row.trips}</td>
-          <td class="px-4 py-2">${row.weightTon.toFixed(2)}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-    
-    /* ===== تحليل كفاءة المركبات ===== */
-    function renderVehAnalysis() {
-      const byVehicleTrips = {};
-      const byVehicleWeight = {};
-      VIEW.forEach(r => {
-        const v = String(r[COL.vehicle] || "").trim();
-        const w = toNumber(r[COL.weight]);
-        if (!byVehicleTrips[v]) byVehicleTrips[v] = 0;
-        if (!byVehicleWeight[v]) byVehicleWeight[v] = 0;
-        byVehicleTrips[v]++;
-        byVehicleWeight[v] += w;
-      });
-
-      const allVehiclesMap = new Map();
-      VEHICLES.forEach(v => allVehiclesMap.set(String(v[VEH_COLS.plate] || "").trim(), v));
-
-      const vehicleData = Array.from(allVehiclesMap.keys())
-        .filter(vPlate => Object.keys(byVehicleTrips).includes(vPlate))
-        .map(vPlate => {
-          const vData = allVehiclesMap.get(vPlate);
-          const totalTrips = byVehicleTrips[vPlate] || 0;
-          const totalWeight = byVehicleWeight[vPlate] || 0;
-          const fuelData = FUEL.find(f => String(f[FUEL_COLS.plate] || "").trim() === vPlate);
-          const maintData = MAINTENANCE.find(m => String(m[MAINT_COLS.plate] || "").trim() === vPlate);
-          const selectedMonths = Array.from(document.querySelectorAll("#monthDropdownMenu input[type=\'checkbox\']:checked")).map(cb => cb.value);
-          const totalFuelCost = selectedMonths.reduce((sum, monthName) => {
-            const monthKey = MONTH_NAMES.indexOf(monthName.trim());
-            if (monthKey !== -1) {
-              const fuelColKey = Object.keys(FUEL_COLS).slice(1)[monthKey];
-              return sum + toNumber(fuelData?.[fuelColKey]);
-            }
-            return sum;
-          }, 0);
-          const totalMaintenanceCost = toNumber(maintData?.[MAINT_COLS.cost]);
-          const capTon = toNumber(vData?.[VEH_COLS.capTon]);
-          const costPerTrip = totalTrips > 0 ? (totalFuelCost + totalMaintenanceCost) / totalTrips : 0;
-          const costPerTon = (totalWeight / KG_TO_TON_DIV) > 0 ? (totalFuelCost + totalMaintenanceCost) / (totalWeight / KG_TO_TON_DIV) : 0;
-          const efficiency = (capTon > 0 && (totalWeight/1000) > 0) ? (totalWeight/1000)/capTon/totalTrips*100 : 0;
-          
-          return {
-            plate: vPlate,
-            driver: vData?.[VEH_COLS.driver],
-            year: toNumber(vData?.[VEH_COLS.year]),
-            capacity: toNumber(vData?.[VEH_COLS.capacity]),
-            capTon: capTon,
-            trips: totalTrips,
-            wton: totalWeight / KG_TO_TON_DIV,
-            eff: efficiency,
-            fuelCost: totalFuelCost,
-            maintenanceCost: totalMaintenanceCost,
-            costPerTrip: costPerTrip,
-            costPerTon: costPerTon
-          };
-        });
-      
-      const vaSearch = document.getElementById("vaSearch").value.toLowerCase();
-      const vaYear = toNumber(document.getElementById("vaYear").value);
-      const vaSort = document.getElementById("vaSort").value;
-
-      let filteredData = vehicleData.filter(d => 
-        (d.plate.toLowerCase().includes(vaSearch) || d.driver?.toLowerCase().includes(vaSearch)) &&
-        (vaYear === 0 || d.year >= vaYear)
-      );
-
-      filteredData.sort((a,b) => {
-        if(vaSort === "eff") return b.eff - a.eff;
-        if(vaSort === "fuelCost") return b.fuelCost - a.fuelCost;
-        if(vaSort === "maintenanceCost") return b.maintenanceCost - a.maintenanceCost;
-        if(vaSort === "costPerTrip") return b.costPerTrip - a.costPerTrip;
-        if(vaSort === "costPerTon") return b.costPerTon - a.costPerTon;
-        if(vaSort === "capTon") return b.capTon - a.capTon;
-        if(vaSort === "trips") return b.trips - a.trips;
-        if(vaSort === "wton") return b.wton - a.wton;
-        if(vaSort === "year") return b.year - a.year;
-        return 0;
-      });
-
-      const tbody = document.getElementById("vehAnalysisTable");
-      tbody.innerHTML = "";
-      filteredData.forEach(d => {
-        const tr = document.createElement("tr");
-        tr.className = "border-b hover:bg-gray-50";
-        tr.innerHTML = `
-          <td class="px-4 py-2">${d.plate}</td>
-          <td class="px-4 py-2">${d.driver || '-'}</td>
-          <td class="px-4 py-2">${d.year || '-'}</td>
-          <td class="px-4 py-2">${d.capacity.toFixed(1)}</td>
-          <td class="px-4 py-2">${d.capTon.toFixed(2)}</td>
-          <td class="px-4 py-2">${d.trips}</td>
-          <td class="px-4 py-2">${d.wton.toFixed(2)}</td>
-          <td class="px-4 py-2">${d.eff.toFixed(1)}%</td>
-          <td class="px-4 py-2">${d.fuelCost.toLocaleString()}</td>
-          <td class="px-4 py-2">${d.maintenanceCost.toLocaleString()}</td>
-          <td class="px-4 py-2">${d.costPerTrip.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>
-          <td class="px-4 py-2">${d.costPerTon.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>
+          <td class="px-4 py-2">${formatTonFromKg(row.weightTon * 1000)}</td>
+          <td class="px-4 py-2">${row.eff.toFixed(2)} %</td>
+          <td class="px-4 py-2">${row.fuelCost || 'N/A'}</td>
+          <td class="px-4 py-2">${row.maintenanceCost || 'N/A'}</td>
+          <td class="px-4 py-2">${row.costPerTrip.toFixed(2)}</td>
+          <td class="px-4 py-2">${row.costPerTon.toFixed(2)}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    /* ===== تحليل السائقين ===== */
-    function renderDriverAnalysis() {
-      const byDriverTrips = {};
-      const byDriverWeight = {};
-      const driverVehicles = {};
-
-      VIEW.forEach(r => {
-        const driver = String(r[COL.driver] || "").trim();
-        const v = String(r[COL.vehicle] || "").trim();
-        const w = toNumber(r[COL.weight]);
-        if (!byDriverTrips[driver]) byDriverTrips[driver] = 0;
-        if (!byDriverWeight[driver]) byDriverWeight[driver] = 0;
-        if (!driverVehicles[driver]) driverVehicles[driver] = new Set();
-        byDriverTrips[driver]++;
-        byDriverWeight[driver] += w;
-        driverVehicles[driver].add(v);
-      });
-
-      const driverData = Object.keys(byDriverTrips).map(driver => ({
-        driver,
-        trips: byDriverTrips[driver],
-        weight: byDriverWeight[driver] / 1000,
-        avg: byDriverTrips[driver] > 0 ? (byDriverWeight[driver] / 1000) / byDriverTrips[driver] : 0,
-        vehicles: Array.from(driverVehicles[driver] || []),
-        vehicleCount: (driverVehicles[driver] || new Set()).size
+    /* ===== ملخص السائقين ===== */
+    function updateDriverSummary(byDriverTrips, byDriverWeight, driverVehicles) {
+      const driversSet = new Set([...Object.keys(byDriverTrips), ...Object.keys(byDriverWeight)]);
+      let summary = Array.from(driversSet).map(d => ({
+        driver: d,
+        trips: byDriverTrips[d] || 0,
+        weightTon: (byDriverWeight[d] || 0) / 1000,
+        avgWeight: (byDriverWeight[d] || 0) / (byDriverTrips[d] || 1) / 1000,
+        vehicles: Array.from(driverVehicles[d] || [])
       }));
 
-      const driverSort = document.getElementById("driverSort").value;
-      const driverTopN = toNumber(document.getElementById("driverTopN").value) || 10;
-      const driverSearch = document.getElementById("driverSearch").value.toLowerCase();
+      const dQuery = document.getElementById("driverSearch")?.value?.toLowerCase() || "";
+      const dSort = document.getElementById("driverSort")?.value || "weight";
+      const dTopN = toNumber(document.getElementById("driverTopN")?.value) || 10;
 
-      let filteredDrivers = driverData.filter(d => d.driver.toLowerCase().includes(driverSearch));
-      
-      if (driverSort === "weight") {
-        filteredDrivers.sort((a,b) => b.weight - a.weight);
-      } else if (driverSort === "trips") {
-        filteredDrivers.sort((a,b) => b.trips - a.trips);
-      } else if (driverSort === "avg") {
-        filteredDrivers.sort((a,b) => b.avg - a.avg);
+      if (dQuery) {
+        summary = summary.filter(r => r.driver.toLowerCase().includes(dQuery));
       }
 
-      const topDrivers = filteredDrivers.slice(0, driverTopN);
+      if (dSort === "weight") { summary.sort((a, b) => b.weightTon - a.weightTon); }
+      else if (dSort === "trips") { summary.sort((a, b) => b.trips - a.trips); }
+      else if (dSort === "avg") { summary.sort((a, b) => b.avgWeight - a.avgWeight); }
 
-      // رسم المخطط
-      const ctx = document.getElementById("driverChart").getContext("2d");
-      if (driverChart) driverChart.destroy();
-      driverChart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: topDrivers.map(d => d.driver),
-          datasets: [
-            {
-              label: "الرحلات",
-              data: topDrivers.map(d => d.trips),
-              backgroundColor: "rgba(54, 162, 235, 0.7)",
-              yAxisID: "y"
-            },
-            {
-              label: "الوزن (طن)",
-              data: topDrivers.map(d => d.weight),
-              backgroundColor: "rgba(255, 99, 132, 0.7)",
-              yAxisID: "y1"
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          interaction: { mode: "index", intersect: false },
-          scales: {
-            x: { display: true },
-            y: { type: "linear", display: true, position: "left", title: { display: true, text: "الرحلات" } },
-            y1: { type: "linear", display: true, position: "right", title: { display: true, text: "الوزن (طن)" }, grid: { drawOnChartArea: false } }
-          }
-        }
-      });
+      summary = summary.slice(0, dTopN);
 
-      // جدول السائقين
       const tbody = document.getElementById("driverTable");
+      if (!tbody) return;
       tbody.innerHTML = "";
-      filteredDrivers.forEach(d => {
+      summary.forEach(row => {
         const tr = document.createElement("tr");
         tr.className = "border-b hover:bg-gray-50";
         tr.innerHTML = `
-          <td class="px-4 py-2">${d.driver}</td>
-          <td class="px-4 py-2">${d.trips}</td>
-          <td class="px-4 py-2">${d.weight.toFixed(2)}</td>
-          <td class="px-4 py-2">${d.avg.toFixed(2)}</td>
-          <td class="px-4 py-2">${d.vehicleCount}</td>
-          <td class="px-4 py-2">${d.vehicles.join(", ")}</td>
+          <td class="px-4 py-2">${row.driver}</td>
+          <td class="px-4 py-2">${row.trips}</td>
+          <td class="px-4 py-2">${formatTonFromKg(row.weightTon * 1000)}</td>
+          <td class="px-4 py-2">${formatTonFromKg(row.avgWeight * 1000)}</td>
+          <td class="px-4 py-2">${row.vehicles.length}</td>
+          <td class="px-4 py-2">${row.vehicles.join(", ")}</td>
         `;
         tbody.appendChild(tr);
       });
+
+      createDriverChart(summary, dSort);
     }
 
-    /* ===== سجل الرحلات ===== */
-    let currentPage = 1;
-    let pageSize = 25;
-
-    function renderTripLog() {
-      const startIdx = (currentPage - 1) * pageSize;
-      const pageData = VIEW.slice(startIdx, startIdx + pageSize);
-      const totalPages = Math.ceil(VIEW.length / pageSize);
-      document.getElementById("pageIdx").textContent = currentPage;
-      document.getElementById("pageTotal").textContent = totalPages;
-      document.getElementById("pageIdx2").textContent = currentPage;
-      document.getElementById("pageTotal2").textContent = totalPages;
-      document.getElementById("prevPage").disabled = currentPage <= 1;
-      document.getElementById("nextPage").disabled = currentPage >= totalPages;
-      document.getElementById("prevPage2").disabled = currentPage <= 1;
-      document.getElementById("nextPage2").disabled = currentPage >= totalPages;
-
-      const tbody = document.getElementById("tbody");
-      tbody.innerHTML = "";
-      pageData.forEach(r => {
-        const tr = document.createElement("tr");
-        tr.className = "border-b hover:bg-gray-50";
-        tr.innerHTML = `
-          <td class="px-4 py-2">${r[COL.month] || ""}</td>
-          <td class="px-4 py-2">${r[COL.date] || ""}</td>
-          <td class="px-4 py-2">${r[COL.driver] || ""}</td>
-          <td class="px-4 py-2">${formatTonFromKg(toNumber(r[COL.weight]))}</td>
-          <td class="px-4 py-2">${r[COL.vehicle] || ""}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+    /* ===== المخططات البيانية ===== */
+    function createTimeSeriesChart(data) {
+      const ctx = document.getElementById('timeSeriesChart').getContext('2d');
+      if (timeSeriesChart) timeSeriesChart.destroy();
+      timeSeriesChart = new Chart(ctx, { type: 'bar', data, options: { maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } } });
     }
-
-    /* ===== المخططات ===== */
-    function renderCharts() {
-      renderTimeSeriesChart();
-      renderVehicleWeightChart();
-      renderVehicleTripsChart();
-    }
-
-    function renderTimeSeriesChart() {
+    
+    function updateTimeSeriesChart() {
+      if (!timeSeriesChart) return;
       const agg = document.getElementById("tsAgg").value;
       const metric = document.getElementById("tsMetric").value;
-      const byDate = {};
-      VIEW.forEach(r => {
-        if (!r[COL.date]) return;
-        const key = agg === "month" ? String(r[COL.month] || "").trim() : toYMD(parseDate(r[COL.date]));
-        if (!byDate[key]) byDate[key] = { trips: 0, weight: 0 };
-        byDate[key].trips++;
-        byDate[key].weight += toNumber(r[COL.weight]);
-      });
-            const monthOrder = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
-      const labels = Object.keys(byDate).sort((a, b) => {
-        if (agg === 'month') {
-          return monthOrder.indexOf(a) - monthOrder.indexOf(b);
-        }
-        return parseDate(a) - parseDate(b);
-      });
-      const data = labels.map(k => byDate[k][metric === "trips" ? "trips" : "weight"] / (metric === "weight" ? 1000 : 1));
-      const ctx = document.getElementById("timeSeriesChart").getContext("2d");
-      if (timeSeriesChart) timeSeriesChart.destroy();
-      timeSeriesChart = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: labels,
-          datasets: [{
-            label: metric === "trips" ? "الرحلات" : "الوزن (طن)",
-            data: data,
-            borderColor: "rgb(59, 130, 246)",
-            backgroundColor: "rgba(59, 130, 246, 0.1)",
-            tension: 0.3,
-            fill: true
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            x: { display: true, title: { display: true, text: "التاريخ" } },
-            y: { display: true, title: { display: true, text: metric === "trips" ? "الرحلات" : "الوزن (طن)" } }
-          }
-        }
-      });
-    }
 
-    function renderVehicleWeightChart() {
-      const byVehicle = {};
+      const aggregated = {};
       VIEW.forEach(r => {
-        const v = String(r[COL.vehicle] || "").trim();
-        const w = toNumber(r[COL.weight]);
-        if (!byVehicle[v]) byVehicle[v] = 0;
-        byVehicle[v] += w;
+        const date = parseDate(r[COL.date]);
+        if (!date) return;
+        const label = agg === 'day' ? toYMD(date) : toYM(date);
+        const value = toNumber(r[COL.weight]) / (metric === 'weight' ? 1000 : 1);
+        if (!aggregated[label]) { aggregated[label] = { value: 0, count: 0 }; }
+        aggregated[label].value += value;
+        aggregated[label].count++;
       });
-      const vwSearch = document.getElementById("vwSearch").value.toLowerCase();
-      const vwTopN = toNumber(document.getElementById("vwTopN").value) || 10;
-      let vehicles = Object.keys(byVehicle)
-        .filter(v => v.toLowerCase().includes(vwSearch))
-        .sort((a,b) => byVehicle[b] - byVehicle[a])
-        .slice(0, vwTopN);
-      const labels = vehicles;
-      const data = vehicles.map(v => byVehicle[v] / 1000);
-      const ctx = document.getElementById("vehicleWeightChart").getContext("2d");
+      
+      const labels = Object.keys(aggregated).sort();
+      const data = labels.map(l => aggregated[l].value);
+
+      timeSeriesChart.data.labels = labels;
+      timeSeriesChart.data.datasets[0].data = data;
+      timeSeriesChart.data.datasets[0].label = metric === 'weight' ? 'إجمالي الوزن (طن)' : 'إجمالي الرحلات';
+      timeSeriesChart.update();
+    }
+    
+    function createVehicleWeightChart(data) {
+      const ctx = document.getElementById('vehicleWeightChart').getContext('2d');
       if (vehicleWeightChart) vehicleWeightChart.destroy();
-      vehicleWeightChart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: labels,
-          datasets: [{
-            label: "الوزن (طن)",
-            data: data,
-            backgroundColor: "rgba(34, 197, 94, 0.7)"
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            x: { display: true, title: { display: true, text: "رقم المركبة" } },
-            y: { display: true, title: { display: true, text: "الوزن (طن)" } }
-          }
-        }
-      });
+      vehicleWeightChart = new Chart(ctx, { type: 'bar', data, options: { indexAxis: 'y', maintainAspectRatio: false, scales: { x: { beginAtZero: true } } } });
     }
-
-    function renderVehicleTripsChart() {
-      const byVehicle = {};
+    
+    function updateVehicleWeightChart() {
+      if (!vehicleWeightChart) return;
+      const q = document.getElementById("vwSearch")?.value?.toLowerCase() || "";
+      const topN = toNumber(document.getElementById("vwTopN")?.value) || 10;
+      
+      const aggregated = {};
       VIEW.forEach(r => {
-        const v = String(r[COL.vehicle] || "").trim();
-        if (!byVehicle[v]) byVehicle[v] = 0;
-        byVehicle[v]++;
+        const veh = String(r[COL.vehicle] || "").trim();
+        if (q && !veh.toLowerCase().includes(q)) return;
+        aggregated[veh] = (aggregated[veh] || 0) + toNumber(r[COL.weight]);
       });
-      const vtSearch = document.getElementById("vtSearch").value.toLowerCase();
-      const vtTopN = toNumber(document.getElementById("vtTopN").value) || 10;
-      let vehicles = Object.keys(byVehicle)
-        .filter(v => v.toLowerCase().includes(vtSearch))
-        .sort((a,b) => byVehicle[b] - byVehicle[a])
-        .slice(0, vtTopN);
-      const labels = vehicles;
-      const data = vehicles.map(v => byVehicle[v]);
-      const ctx = document.getElementById("vehicleTripsChart").getContext("2d");
+      
+      let summary = Object.entries(aggregated).map(([veh, weight]) => ({ veh, weight }));
+      summary.sort((a,b) => b.weight - a.weight);
+      summary = summary.slice(0, topN);
+      
+      const labels = summary.map(s => s.veh);
+      const data = summary.map(s => s.weight / 1000);
+      
+      vehicleWeightChart.data.labels = labels;
+      vehicleWeightChart.data.datasets[0].data = data;
+      vehicleWeightChart.update();
+    }
+    
+    function createVehicleTripsChart(data) {
+      const ctx = document.getElementById('vehicleTripsChart').getContext('2d');
       if (vehicleTripsChart) vehicleTripsChart.destroy();
-      vehicleTripsChart = new Chart(ctx, {
-        type: "doughnut",
-        data: {
-          labels: labels,
-          datasets: [{
-            label: "الرحلات",
-            data: data,
-            backgroundColor: makeColors(labels.length)
-
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: "bottom" },
-            tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} رحلة (${((ctx.raw/VIEW.length)*100).toFixed(1)}%)` } }
-          }
-        }
+      vehicleTripsChart = new Chart(ctx, { type: 'pie', data, options: { maintainAspectRatio: false, plugins: { datalabels: { formatter: (value, ctx) => { return ctx.chart.data.labels[ctx.dataIndex] + '\n' + Math.round(value) + '%'; }, color: '#fff', } } } });
+    }
+    
+    function updateVehicleTripsChart() {
+      if (!vehicleTripsChart) return;
+      const q = document.getElementById("vtSearch")?.value?.toLowerCase() || "";
+      const topN = toNumber(document.getElementById("vtTopN")?.value) || 10;
+      
+      const aggregated = {};
+      VIEW.forEach(r => {
+        const veh = String(r[COL.vehicle] || "").trim();
+        if (q && !veh.toLowerCase().includes(q)) return;
+        aggregated[veh] = (aggregated[veh] || 0) + 1;
       });
+      
+      const totalTrips = Object.values(aggregated).reduce((sum, count) => sum + count, 0);
+      let summary = Object.entries(aggregated).map(([veh, trips]) => ({ veh, trips, percentage: (trips / totalTrips) * 100 }));
+      summary.sort((a,b) => b.trips - a.trips);
+      
+      const others = summary.slice(topN).reduce((sum, s) => sum + s.percentage, 0);
+      summary = summary.slice(0, topN);
+      if (others > 0) summary.push({ veh: 'أخرى', percentage: others });
+      
+      const labels = summary.map(s => s.veh);
+      const data = summary.map(s => s.percentage);
+      
+      vehicleTripsChart.data.labels = labels;
+      vehicleTripsChart.data.datasets[0].data = data;
+      vehicleTripsChart.update();
     }
 
-    /* ===== التحديث الرئيسي ===== */
-    function updateAll() {
-      applyFilters();
+    function createDriverChart(data, sortMetric) {
+      const ctx = document.getElementById('driverChart').getContext('2d');
+      if (driverChart) driverChart.destroy();
+      const labels = data.map(r => r.driver);
+      const values = data.map(r => sortMetric === 'trips' ? r.trips : r.weightTon);
+      const label = sortMetric === 'trips' ? 'عدد الرحلات' : 'الوزن (طن)';
+      driverChart = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label, data: values, backgroundColor: '#f97316' }] }, options: { indexAxis: 'y', maintainAspectRatio: false, scales: { x: { beginAtZero: true } } } });
+    }
+    
+    /* ===== تحديث لوحة البيانات الرئيسية ===== */
+    function updateKPIs() {
+      const totalTrips = VIEW.length;
+      const totalWeight = VIEW.reduce((sum, r) => sum + toNumber(r[COL.weight]), 0);
+      const totalVehicles = new Set(VIEW.map(r => String(r[COL.vehicle]).trim())).size;
+      const totalDrivers = new Set(VIEW.map(r => String(r[COL.driver]).trim())).size;
+      const avgWeight = totalTrips > 0 ? totalWeight / totalTrips : 0;
+      const uniqueDates = new Set(VIEW.filter(r => r[COL.date]).map(r => toYMD(parseDate(r[COL.date]))));
+      const dailyAverageWeight = uniqueDates.size > 0 ? totalWeight / uniqueDates.size : 0;
+      const dailyAverageTrips = uniqueDates.size > 0 ? totalTrips / uniqueDates.size : 0;
+      const uniqueMonths = new Set(VIEW.filter(r => r[COL.month]).map(r => r[COL.month]));
+      const monthlyAverageWeight = uniqueMonths.size > 0 ? totalWeight / uniqueMonths.size : 0;
+      const monthlyAverageTrips = uniqueMonths.size > 0 ? totalTrips / uniqueMonths.size : 0;
+      
       const byVehicleTrips = {};
       const byVehicleWeight = {};
+      const byDayWeight = {};
       const vehicleDrivers = {};
       const byDriverTrips = {};
       const byDriverWeight = {};
-      const byMonthTrips = {};
-      const byMonthWeight = {};
-      const byDateTrips = {};
-      const byDateWeight = {};
-      const vehiclesSet = new Set();
-      const driversSet = new Set();
-      const monthsSet = new Set();
-      let totalWeight = 0;
-      let totalTrips = VIEW.length;
-      let topDay = { date: null, weight: 0 };
-      let topVehicleWeight = { vehicle: null, weight: 0 };
-      let topVehicleTrips = { vehicle: null, trips: 0 };
+      const driverVehicles = {};
 
       VIEW.forEach(r => {
-        const v = String(r[COL.vehicle] || "").trim();
+        const veh = String(r[COL.vehicle] || "").trim();
         const driver = String(r[COL.driver] || "").trim();
-        const month = String(r[COL.month] || "").trim();
-        const date = r[COL.date];
-        const w = toNumber(r[COL.weight]);
-        vehiclesSet.add(v);
-        driversSet.add(driver);
-        if (month) monthsSet.add(month);
-        totalWeight += w;
-        if (!byVehicleTrips[v]) byVehicleTrips[v] = 0;
-        if (!byVehicleWeight[v]) byVehicleWeight[v] = 0;
-        if (!byDriverTrips[driver]) byDriverTrips[driver] = 0;
-        if (!byDriverWeight[driver]) byDriverWeight[driver] = 0;
-        if (!byMonthTrips[month]) byMonthTrips[month] = 0;
-        if (!byMonthWeight[month]) byMonthWeight[month] = 0;
-        if (!vehicleDrivers[v]) vehicleDrivers[v] = new Set();
-        byVehicleTrips[v]++;
-        byVehicleWeight[v] += w;
-        byDriverTrips[driver]++;
-        byDriverWeight[driver] += w;
-        byMonthTrips[month]++;
-        byMonthWeight[month] += w;
-        vehicleDrivers[v].add(driver);
-        if (date) {
-          if (!byDateTrips[date]) byDateTrips[date] = 0;
-          if (!byDateWeight[date]) byDateWeight[date] = 0;
-          byDateTrips[date]++;
-          byDateWeight[date] += w;
-          if (byDateWeight[date] > topDay.weight) {
-            topDay = { date, weight: byDateWeight[date] };
+        const date = parseDate(r[COL.date]);
+        const weight = toNumber(r[COL.weight]);
+        
+        if(veh) {
+          byVehicleTrips[veh] = (byVehicleTrips[veh] || 0) + 1;
+          byVehicleWeight[veh] = (byVehicleWeight[veh] || 0) + weight;
+          if(driver) {
+            if(!vehicleDrivers[veh]) vehicleDrivers[veh] = new Set();
+            vehicleDrivers[veh].add(driver);
           }
         }
-        if (byVehicleWeight[v] > topVehicleWeight.weight) {
-          topVehicleWeight = { vehicle: v, weight: byVehicleWeight[v] };
+        
+        if(driver) {
+          byDriverTrips[driver] = (byDriverTrips[driver] || 0) + 1;
+          byDriverWeight[driver] = (byDriverWeight[driver] || 0) + weight;
+          if(veh) {
+            if(!driverVehicles[driver]) driverVehicles[driver] = new Set();
+            driverVehicles[driver].add(veh);
+          }
         }
-        if (byVehicleTrips[v] > topVehicleTrips.trips) {
-          topVehicleTrips = { vehicle: v, trips: byVehicleTrips[v] };
+        
+        if(date) {
+          const ymd = toYMD(date);
+          byDayWeight[ymd] = (byDayWeight[ymd] || 0) + weight;
         }
       });
 
-      // تحديث البطاقات
-      document.getElementById("k_trips").textContent = totalTrips.toLocaleString();
-      document.getElementById("k_weight").textContent = formatTonFromKg(totalWeight);
-      document.getElementById("k_vehicleCount").textContent = vehiclesSet.size;
-      document.getElementById("k_drivers").textContent = driversSet.size;
-      document.getElementById("k_avg").textContent = totalTrips > 0 ? formatTonFromKg(totalWeight / totalTrips) : "0";
-      document.getElementById("k_topVehicleWeight").textContent = topVehicleWeight.vehicle ? `${topVehicleWeight.vehicle} (${formatTonFromKg(topVehicleWeight.weight)})` : "-";
-      document.getElementById("k_topVehicleTrips").textContent = topVehicleTrips.vehicle ? `${topVehicleTrips.vehicle} (${topVehicleTrips.trips})` : "-";
-      document.getElementById("k_topDay").textContent = topDay.date ? `${topDay.date} (${formatTonFromKg(topDay.weight)})` : "-";
+      const topVehicleTrips = Object.entries(byVehicleTrips).sort(([, a], [, b]) => b - a)[0];
+      const topVehicleWeight = Object.entries(byVehicleWeight).sort(([, a], [, b]) => b - a)[0];
+      const topDay = Object.entries(byDayWeight).sort(([, a], [, b]) => b - a)[0];
 
-      // متوسط يومي وشهري
-      const uniqueDays = new Set(Object.keys(byDateTrips)).size;
-      const uniqueMonths = monthsSet.size;
-      document.getElementById("k_avgDailyWeight").textContent = uniqueDays > 0 ? formatTonFromKg(totalWeight / uniqueDays) : "0";
-      document.getElementById("k_avgDailyTrips").textContent = uniqueDays > 0 ? (totalTrips / uniqueDays).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : "0";
-      document.getElementById("k_avgMonthlyWeight").textContent = uniqueMonths > 0 ? formatTonFromKg(totalWeight / uniqueMonths) : "0";
-      document.getElementById("k_avgMonthlyTrips").textContent = uniqueMonths > 0 ? (totalTrips / uniqueMonths).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : "0";
+      document.getElementById('k_trips').textContent = totalTrips.toLocaleString();
+      document.getElementById('k_weight').textContent = formatTonFromKg(totalWeight);
+      document.getElementById('k_vehicleCount').textContent = totalVehicles.toLocaleString();
+      document.getElementById('k_drivers').textContent = totalDrivers.toLocaleString();
+      document.getElementById('k_avg').textContent = formatTonFromKg(avgWeight);
+      document.getElementById('k_topVehicleTrips').textContent = topVehicleTrips ? `${topVehicleTrips[0]} (${topVehicleTrips[1]})` : '-';
+      document.getElementById('k_topVehicleWeight').textContent = topVehicleWeight ? `${topVehicleWeight[0]} (${formatTonFromKg(topVehicleWeight[1])})` : '-';
+      document.getElementById('k_topDay').textContent = topDay ? `${topDay[0]} (${formatTonFromKg(topDay[1])})` : '-';
+      document.getElementById('k_avgDailyWeight').textContent = `${formatTonFromKg(dailyAverageWeight)}`;
+      document.getElementById('k_avgDailyTrips').textContent = `${dailyAverageTrips.toFixed(2)}`;
+      document.getElementById('k_avgMonthlyWeight').textContent = `${formatTonFromKg(monthlyAverageWeight)}`;
+      document.getElementById('k_avgMonthlyTrips').textContent = `${monthlyAverageTrips.toFixed(2)}`;
 
-      // إجمالي تكاليف الوقود والصيانة
-      let totalFuelCost = 0;
-      let totalMaintenanceCost = 0;
-      Object.keys(byVehicleTrips).forEach(vPlate => {
-        const fuelData = FUEL.find(f => String(f[FUEL_COLS.plate] || "").trim() === vPlate);
-        const maintData = MAINTENANCE.find(m => String(m[MAINT_COLS.plate] || "").trim() === vPlate);
-        const selectedMonths = Array.from(document.querySelectorAll("#monthDropdownMenu input[type=\'checkbox\']:checked")).map(cb => cb.value);
-        totalFuelCost += selectedMonths.reduce((sum, monthName) => {
-          const monthKey = MONTH_NAMES.indexOf(monthName.trim());
-          if (monthKey !== -1) {
-            const fuelColKey = Object.keys(FUEL_COLS).slice(1)[monthKey];
-            return sum + toNumber(fuelData?.[fuelColKey]);
-          }
-          return sum;
-        }, 0);
-        totalMaintenanceCost += toNumber(maintData?.[MAINT_COLS.cost]);
+      // Update charts and tables
+      updateTimeSeriesChart();
+      updateVehicleWeightChart();
+      updateVehicleTripsChart();
+      updateVehicleSummary(byVehicleTrips, byVehicleWeight, vehicleDrivers);
+      updateDriverSummary(byDriverTrips, byDriverWeight, driverVehicles);
+    }
+    
+    function populateTripTable() {
+      const tbody = document.getElementById("tbody");
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const paginatedData = VIEW.slice(startIndex, endIndex);
+
+      paginatedData.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-b hover:bg-gray-50';
+        tr.innerHTML = `
+          <td class="px-4 py-2">${r[COL.month] || ''}</td>
+          <td class="px-4 py-2">${r[COL.date] || ''}</td>
+          <td class="px-4 py-2">${r[COL.driver] || ''}</td>
+          <td class="px-4 py-2">${formatTonFromKg(toNumber(r[COL.weight]))}</td>
+          <td class="px-4 py-2">${r[COL.vehicle] || ''}</td>
+        `;
+        tbody.appendChild(tr);
       });
-      document.getElementById("k_totalFuelCost").textContent = totalFuelCost.toLocaleString();
-      document.getElementById("k_totalMaintenanceCost").textContent = totalMaintenanceCost.toLocaleString();
-
-      // تحديث المخططات والجداول
-      renderCharts();
-      renderVehAnalysis();
-      renderDriverAnalysis();
-      renderTripLog();
-      showToast("تم تحديث البيانات بنجاح!");
+      
+      const totalPages = Math.ceil(VIEW.length / pageSize);
+      document.getElementById('pageIdx').textContent = currentPage;
+      document.getElementById('pageTotal').textContent = totalPages;
+      document.getElementById('pageIdx2').textContent = currentPage;
+      document.getElementById('pageTotal2').textContent = totalPages;
+    }
+    
+    function renderUI() {
+      updateKPIs();
+      populateTripTable();
+    }
+    
+    /* ===== تصدير البيانات ===== */
+    async function exportToCSV(data, fileName) {
+      const csv = Papa.unparse(data);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.setAttribute("href", URL.createObjectURL(blob));
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
-    /* ===== التصدير ===== */
-    document.getElementById("btnCSV").addEventListener("click", () => {
-      const csv = Papa.unparse(VIEW);
-      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "trips.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    document.getElementById("btnXLSX").addEventListener("click", () => {
-      const wb = XLSX.utils.book_new();
-      const wsTrips = XLSX.utils.json_to_sheet(VIEW);
-      XLSX.utils.book_append_sheet(wb, wsTrips, "الرحلات");
+    async function exportToXLSX() {
+      const tripData = VIEW;
+      
+      // Calculate vehicle summary for a separate sheet
       const byVehicleTrips = {};
       const byVehicleWeight = {};
-      VIEW.forEach(r => {
-        const v = String(r[COL.vehicle] || "").trim();
-        const w = toNumber(r[COL.weight]);
-        if (!byVehicleTrips[v]) byVehicleTrips[v] = 0;
-        if (!byVehicleWeight[v]) byVehicleWeight[v] = 0;
-        byVehicleTrips[v]++;
-        byVehicleWeight[v] += w;
-      });
-
-      const allVehiclesMap = new Map();
-      VEHICLES.forEach(v => allVehiclesMap.set(String(v[VEH_COLS.plate] || "").trim(), v));
-
-      const vehicleSummaryData = Array.from(allVehiclesMap.keys())
-        .filter(vPlate => Object.keys(byVehicleTrips).includes(vPlate))
-        .map(vPlate => {
-          const vData = allVehiclesMap.get(vPlate);
-          const totalTrips = byVehicleTrips[vPlate] || 0;
-          const totalWeight = byVehicleWeight[vPlate] || 0;
-          const fuelData = FUEL.find(f => String(f[FUEL_COLS.plate] || "").trim() === vPlate);
-          const maintData = MAINTENANCE.find(m => String(m[MAINT_COLS.plate] || "").trim() === vPlate);
-          const selectedMonths = Array.from(document.querySelectorAll("#monthDropdownMenu input[type=\'checkbox\']:checked")).map(cb => cb.value);
-          const totalFuelCost = selectedMonths.reduce((sum, monthName) => {
-            const monthKey = MONTH_NAMES.indexOf(monthName.trim());
-            if (monthKey !== -1) {
-              const fuelColKey = Object.keys(FUEL_COLS).slice(1)[monthKey];
-              return sum + toNumber(fuelData?.[fuelColKey]);
-            }
-            return sum;
-          }, 0);
-          const totalMaintenanceCost = toNumber(maintData?.[MAINT_COLS.cost]);
-          const capTon = toNumber(vData?.[VEH_COLS.capTon]);
-          const costPerTrip = totalTrips > 0 ? (totalFuelCost + totalMaintenanceCost) / totalTrips : 0;
-          const costPerTon = (totalWeight / KG_TO_TON_DIV) > 0 ? (totalFuelCost + totalMaintenanceCost) / (totalWeight / KG_TO_TON_DIV) : 0;
-          const efficiency = (capTon > 0 && (totalWeight/KG_TO_TON_DIV) > 0) ? (totalWeight/KG_TO_TON_DIV)/capTon/totalTrips*100 : 0;
-          
-          return {
-            "رقم المركبة": vPlate,
-            "السائق": vData?.[VEH_COLS.driver] || "-",
-            "الرحلات": totalTrips,
-            "الوزن (طن)": (totalWeight / KG_TO_TON_DIV).toFixed(2),
-            "كلفة الوقود": totalFuelCost.toLocaleString(),
-            "كلفة الصيانة": totalMaintenanceCost.toLocaleString(),
-            "الكلفة لكل رحلة": costPerTrip.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0}),
-            "الكلفة لكل طن": costPerTon.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0}),
-            "الكفاءة (%)": efficiency.toFixed(1)
-          };
-        });
-      const wsVehicles = XLSX.utils.json_to_sheet(vehicleSummaryData);
-      XLSX.utils.book_append_sheet(wb, wsVehicles, "ملخص المركبات");
-      XLSX.writeFile(wb, "dashboard_data.xlsx");
-    });
-
-    document.getElementById("btnPDF").addEventListener("click", () => {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      doc.text("سجل الرحلات", 20, 20);
-      let y = 30;
-      VIEW.forEach((r, i) => {
-        if (y > 270) { doc.addPage(); y = 20; }
-        doc.text(`${r[COL.date] || ""} - ${r[COL.driver] || ""} - ${formatTonFromKg(toNumber(r[COL.weight]))} - ${r[COL.vehicle] || ""}`, 20, y);
-        y += 10;
-      });
-      doc.save("trips.pdf");
-    });
-
-    document.getElementById("btnDriversCSV").addEventListener("click", () => {
-      const byDriverTrips = {};
-      const byDriverWeight = {};
-      const driverVehicles = {};
-      VIEW.forEach(r => {
+      const vehicleDrivers = {};
+      ALL.forEach(r => {
+        const veh = String(r[COL.vehicle] || "").trim();
         const driver = String(r[COL.driver] || "").trim();
-        const v = String(r[COL.vehicle] || "").trim();
-        const w = toNumber(r[COL.weight]);
-        if (!byDriverTrips[driver]) byDriverTrips[driver] = 0;
-        if (!byDriverWeight[driver]) byDriverWeight[driver] = 0;
-        if (!driverVehicles[driver]) driverVehicles[driver] = new Set();
-        byDriverTrips[driver]++;
-        byDriverWeight[driver] += w;
-        driverVehicles[driver].add(v);
+        const weight = toNumber(r[COL.weight]);
+        byVehicleTrips[veh] = (byVehicleTrips[veh] || 0) + 1;
+        byVehicleWeight[veh] = (byVehicleWeight[veh] || 0) + weight;
+        if(!vehicleDrivers[veh]) vehicleDrivers[veh] = new Set();
+        vehicleDrivers[veh].add(driver);
       });
-      const driverData = Object.keys(byDriverTrips).map(driver => ({
-        السائق: driver,
-        الرحلات: byDriverTrips[driver],
-        "الوزن (طن)": (byDriverWeight[driver] / 1000).toFixed(2),
-        "متوسط/رحلة (طن)": (byDriverTrips[driver] > 0 ? (byDriverWeight[driver] / 1000) / byDriverTrips[driver] : 0).toFixed(2),
-        "عدد المركبات": (driverVehicles[driver] || new Set()).size,
-        المركبات: Array.from(driverVehicles[driver] || []).join(", ")
+      const vehicleSummary = Object.keys(byVehicleTrips).map(v => ({
+        [VEH_COLS.plate]: v,
+        "عدد الرحلات": byVehicleTrips[v],
+        "الوزن (طن)": formatTonFromKg(byVehicleWeight[v]),
+        "السائقون": Array.from(vehicleDrivers[v]).join(", ")
       }));
-      const csv = Papa.unparse(driverData);
-      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "drivers.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    });
+      vehicleSummary.sort((a,b) => b["عدد الرحلات"] - a["عدد الرحلات"]);
 
-    /* ===== Loading Overlay and Toast Notifications ===== */
-    function setLoading(isLoading, message = "جاري التحميل...") {
-      const overlay = document.getElementById("loadingOverlay");
-      const msg = document.getElementById("loadingMessage");
-      if (isLoading) {
-        msg.textContent = message;
-        overlay.classList.remove("hidden");
-      } else {
-        overlay.classList.add("hidden");
-      }
+      const ws_trips = XLSX.utils.json_to_sheet(tripData);
+      const ws_vehicles = XLSX.utils.json_to_sheet(vehicleSummary);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws_trips, "سجل الرحلات");
+      XLSX.utils.book_append_sheet(wb, ws_vehicles, "ملخص المركبات");
+      XLSX.writeFile(wb, "تقرير_النقل.xlsx");
     }
 
-    function makeColors(numColors) {
-      const colors = [];
-      for (let i = 0; i < numColors; i++) {
-        const hue = (i * 137.508) % 360; // Use golden angle approximation for even distribution
-        colors.push(`hsl(${hue}, 70%, 60%)`);
-      }
-      return colors;
-    }
-
-    function debounce(func, delay) {
-      let timeout;
-      return function(...args) {
-        const context = this;
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(context, args), delay);
-      };
-    }
-
-    function showToast(message, type = "success") {
-      const container = document.getElementById("toast-container");
-      const toast = document.createElement("div");
-      const bgColor = type === "success" ? "bg-green-500" : "bg-red-500";
-      toast.className = `${bgColor} text-white px-4 py-2 rounded-lg shadow-lg animate-pulse`;
-      toast.textContent = message;
-      container.appendChild(toast);
-      setTimeout(() => {
-        toast.remove();
-      }, 3000);
-    }
-
-    /* ===== تحميل البيانات ===== */
-    function loadData() {
-      setLoading(true, "جاري تحميل بيانات الرحلات...");
-      Papa.parse(CSV_URL, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: res => {
-          ALL = res.data;
-          dataLoaded = true;
-          updateAll();
-          maybeHideOverlay();
+    async function exportToPDF() {
+      const content = document.getElementById('tripLogContent').querySelector('table');
+      const filename = `سجل_الرحلات_${new Date().toISOString().slice(0,10)}.pdf`;
+      const doc = new jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      doc.setFont('Arabic', 'normal');
+      doc.html(content, {
+        callback: function (doc) {
+          doc.save(filename);
         },
-        error: err => {
-          console.error("فشل تحميل بيانات الرحلات:", err);
-          setLoading(false);
-        }
+        x: 10,
+        y: 10,
+        html2canvas: { scale: 0.5 }
       });
     }
 
-    function loadVehicles() {
-      setLoading(true, "جاري تحميل بيانات المركبات...");
-      Papa.parse(VEH_URL, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: res => {
-          VEHICLES = res.data;
-          vehiclesLoaded = true;
-          updateAll();
-          maybeHideOverlay();
-        },
-        error: err => {
-          console.error("فشل تحميل بيانات المركبات:", err);
-          setLoading(false);
-        }
-      });
-    }
-
-    function loadFuel() {
-      setLoading(true, "جاري تحميل بيانات الوقود...");
-      Papa.parse(FUEL_URL, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: res => {
-          FUEL = res.data;
-          fuelLoaded = true;
-          updateAll();
-          maybeHideOverlay();
-        },
-        error: err => {
-          console.error("فشل تحميل بيانات الوقود:", err);
-          setLoading(false);
-        }
-      });
-    }
-
-    function loadMaintenance() {
-      setLoading(true, "جاري تحميل بيانات الصيانة...");
-      Papa.parse(MAINTENANCE_URL, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: res => {
-          MAINTENANCE = res.data;
-          maintenanceLoaded = true;
-          updateAll();
-          maybeHideOverlay();
-        },
-        error: err => {
-          console.error("فشل تحميل بيانات الصيانة:", err);
-          setLoading(false);
-        }
-      });
-    }
-
-    /* ===== فلترة الشهور والمركبات ===== */
-    function populateMonthFilter() {
-      const monthsSet = new Set();
-      ALL.forEach(r => {
-        const m = String(r[COL.month] || "").trim();
-        if (m) monthsSet.add(m);
-      });
-      const months = Array.from(monthsSet).sort((a,b) => {
-        const am = new Date(a + "-01"), bm = new Date(b + "-01");
-        return bm - am;
-      });
-      const menu = document.getElementById("monthDropdownMenu");
-      menu.innerHTML = "";
-      months.forEach(m => {
-        const div = document.createElement("div");
-        div.className = "px-3 py-2 hover:bg-gray-50 flex items-center gap-2";
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.value = m;
-        cb.checked = true;
-        cb.className = "ml-2";
-        cb.addEventListener("change", updateAll);
-        const label = document.createElement("label");
-        label.textContent = m;
-        label.className = "flex-1 cursor-pointer";
-        label.addEventListener("click", () => { cb.checked = !cb.checked; cb.dispatchEvent(new Event("change")); });
-        div.appendChild(cb);
-        div.appendChild(label);
-        menu.appendChild(div);
-      });
-      document.getElementById("monthSelectAll").addEventListener("click", () => {
-        menu.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = true);
-        updateAll();
-      });
-      document.getElementById("monthClearAll").addEventListener("click", () => {
-        menu.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
-        updateAll();
-      });
-    }
-
-    function populateVehicleFilter() {
-      const vehiclesSet = new Set();
-      ALL.forEach(r => {
-        const v = String(r[COL.vehicle] || "").trim();
-        if (v) vehiclesSet.add(v);
-      });
-      const vehicles = Array.from(vehiclesSet).sort();
-      const menu = document.getElementById("vehicleDropdownMenu");
-      menu.innerHTML = "";
-      vehicles.forEach(v => {
-        const div = document.createElement("div");
-        div.className = "px-3 py-2 hover:bg-gray-50 flex items-center gap-2";
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.value = v;
-        cb.checked = true;
-        cb.className = "ml-2";
-        cb.addEventListener("change", updateAll);
-        const label = document.createElement("label");
-        label.textContent = v;
-        label.className = "flex-1 cursor-pointer";
-        label.addEventListener("click", () => { cb.checked = !cb.checked; cb.dispatchEvent(new Event("change")); });
-        div.appendChild(cb);
-        div.appendChild(label);
-        menu.appendChild(div);
-      });
-      document.getElementById("vehSelectAll").addEventListener("click", () => {
-        menu.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = true);
-        updateAll();
-      });
-      document.getElementById("vehClearAll").addEventListener("click", () => {
-        menu.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
-        updateAll();
-      });
-    }
-
-    /* ===== إعداد القوائم المنسدلة ===== */
-    function setupDropdowns() {
-      const monthBtn = document.getElementById("monthDropdownBtn");
-      const monthMenu = document.getElementById("monthDropdownMenu");
-      const vehicleBtn = document.getElementById("vehicleDropdownBtn");
-      const vehicleMenu = document.getElementById("vehicleDropdownMenu");
-
-      function toggleMenu(menu) {
-        const isHidden = menu.classList.contains("hidden");
-        monthMenu.classList.add("hidden");
-        vehicleMenu.classList.add("hidden");
-        if (isHidden) menu.classList.remove("hidden");
-      }
-
-      monthBtn.addEventListener("click", () => toggleMenu(monthMenu));
-      vehicleBtn.addEventListener("click", () => toggleMenu(vehicleMenu));
-
-      document.addEventListener("click", e => {
-        if (!monthBtn.contains(e.target) && !monthMenu.contains(e.target)) monthMenu.classList.add("hidden");
-        if (!vehicleBtn.contains(e.target) && !vehicleMenu.contains(e.target)) vehicleMenu.classList.add("hidden");
-      });
-    }
-
-    /* ===== إعدادات الصفحة ===== */
-    document.getElementById("pageSize").addEventListener("change", e => {
-      pageSize = parseInt(e.target.value);
-      currentPage = 1;
-      renderTripLog();
-    });
-
-    document.getElementById("prevPage").addEventListener("click", () => {
-      if (currentPage > 1) { currentPage--; renderTripLog(); }
-    });
-    document.getElementById("nextPage").addEventListener("click", () => {
-      if (currentPage < Math.ceil(VIEW.length / pageSize)) { currentPage++; renderTripLog(); }
-    });
-    document.getElementById("prevPage2").addEventListener("click", () => {
-      if (currentPage > 1) { currentPage--; renderTripLog(); }
-    });
-    document.getElementById("nextPage2").addEventListener("click", () => {
-      if (currentPage < Math.ceil(VIEW.length / pageSize)) { currentPage++; renderTripLog(); }
-    });
-
-    /* ===== مستمعي الأحداث ===== */
-    document.getElementById("q").addEventListener("input", debounce(updateAll, 300));
-    document.getElementById("dateExact").addEventListener("change", updateAll);
-    document.getElementById("tsAgg").addEventListener("change", renderTimeSeriesChart);
-    document.getElementById("tsMetric").addEventListener("change", renderTimeSeriesChart);
-    document.getElementById("vwSearch").addEventListener("input", debounce(renderVehicleWeightChart, 300));
-    document.getElementById("vwTopN").addEventListener("change", renderVehicleWeightChart);
-    document.getElementById("vtSearch").addEventListener("input", debounce(renderVehicleTripsChart, 300));
-    document.getElementById("vtTopN").addEventListener("change", renderVehicleTripsChart);
-    document.getElementById("vaSearch").addEventListener("input", debounce(renderVehAnalysis, 300));
-    document.getElementById("vaYear").addEventListener("input", debounce(renderVehAnalysis, 300));
-    document.getElementById("vaSort").addEventListener("change", renderVehAnalysis);
-    document.getElementById("driverSort").addEventListener("change", renderDriverAnalysis);
-    document.getElementById("driverTopN").addEventListener("change", renderDriverAnalysis);
-    document.getElementById("driverSearch").addEventListener("input", debounce(renderDriverAnalysis, 300));
-
-    document.getElementById("resetBtn").addEventListener("click", () => {
-      document.getElementById("q").value = "";
-      document.getElementById("dateExact").value = "";
-      document.querySelectorAll("#monthDropdownMenu input[type='checkbox']").forEach(cb => cb.checked = true);
-      document.querySelectorAll("#vehicleDropdownMenu input[type='checkbox']").forEach(cb => cb.checked = true);
-      updateAll();
-    });
-
-    document.getElementById("refreshBtn").addEventListener("click", () => {
-      dataLoaded = vehiclesLoaded = fuelLoaded = maintenanceLoaded = false;
-      loadData();
-      loadVehicles();
-      loadFuel();
-      loadMaintenance();
-    });
-
-    /* ===== Collapsible Sections Functionality ===== */
-    function setupCollapsibleSections() {
-      const headers = document.querySelectorAll('.collapsible-header');
-      const collapsibleState = JSON.parse(localStorage.getItem('collapsibleState')) || {};
-
-      headers.forEach(header => {
-        const targetId = header.getAttribute('data-target');
-        const content = document.getElementById(targetId);
-        const icon = header.querySelector('.collapsible-icon');
-
-        // Set initial state from localStorage
-        if (collapsibleState[targetId]) {
-          content.classList.add('expanded');
-          icon.textContent = '▲';
-        } else {
-          content.classList.remove('expanded');
-          icon.textContent = '▼';
-        }
-
-        header.addEventListener('click', function() {
-          content.classList.toggle('expanded');
-          const isExpanded = content.classList.contains('expanded');
-          collapsibleState[targetId] = isExpanded;
-          localStorage.setItem('collapsibleState', JSON.stringify(collapsibleState));
-
-          if (isExpanded) {
-            icon.textContent = \'▲\';
-            // Resize charts within the expanded section
-            const chartCanvas = content.querySelector(\'canvas\');
-            if (chartCanvas && chartCanvas.chart) {
-              chartCanvas.chart.resize();
+    /* ===== تحميل البيانات من المصدر ===== */
+    async function parseSheetData(url) {
+      return new Promise((resolve, reject) => {
+        Papa.parse(url, {
+          download: true,
+          header: true,
+          skipEmptyLines: true,
+          complete: function(results) {
+            if (results.errors.length) {
+              console.error("Parsing errors:", results.errors);
+              reject("Failed to parse data");
+            } else {
+              resolve(results.data);
             }
-          } else {
-            icon.textContent = \'▼\';
+          },
+          error: function(err) {
+            console.error("Network error:", err);
+            reject("Failed to fetch data");
           }
         });
       });
     }
 
-    /* ===== تهيئة التطبيق ===== */
-    function init() {
-      loadData();
-      loadVehicles();
-      loadFuel();
-      loadMaintenance();
-      setupDropdowns();
-      populateMonthFilter();
-      populateVehicleFilter();
-      setupCollapsibleSections();
+    async function fetchData(url, type) {
+      setLoading(true, `جاري تحميل ${type}...`);
+      try {
+        const data = await parseSheetData(url);
+        if (type === 'الرحلات') { ALL = data; dataLoaded = true; }
+        else if (type === 'المركبات') { VEHICLES = data; vehiclesLoaded = true; }
+        else if (type === 'الوقود') { FUEL = data; fuelLoaded = true; }
+        else if (type === 'الصيانة') { MAINTENANCE = data; maintenanceLoaded = true; }
+        
+        showToast(`${type} تم تحميلها بنجاح.`);
+      } catch (e) {
+        showToast(`فشل في تحميل ${type}.`, 'error');
+        console.error(e);
+      } finally {
+        maybeHideOverlay();
+      }
     }
 
-    // بدء التطبيق عند تحميل الصفحة
-    window.addEventListener("DOMContentLoaded", init);
+    /* ===== عناصر التحكم التفاعلية ===== */
+    function setupDropdown(dropdownBtnId, dropdownMenuId, selectAllId, clearAllId, countId, data, labelKey) {
+      const dropdownBtn = document.getElementById(dropdownBtnId);
+      const dropdownMenu = document.getElementById(dropdownMenuId);
+      const selectAllBtn = document.getElementById(selectAllId);
+      const clearAllBtn = document.getElementById(clearAllId);
+      const countSpan = document.getElementById(countId);
+
+      const uniqueItems = [...new Set(data.map(r => String(r[labelKey] || "").trim()))].filter(Boolean).sort();
+      
+      dropdownMenu.innerHTML = '';
+      uniqueItems.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center px-4 py-2 hover:bg-gray-100';
+        div.innerHTML = `
+          <input type="checkbox" id="${labelKey}-${index}" value="${item}" class="form-checkbox h-4 w-4 text-blue-600 rounded" checked>
+          <label for="${labelKey}-${index}" class="ml-2 text-sm text-gray-700 w-full">${item}</label>
+        `;
+        dropdownMenu.appendChild(div);
+      });
+
+      function updateCount() {
+        const checkedCount = dropdownMenu.querySelectorAll('input[type="checkbox"]:checked').length;
+        countSpan.textContent = `(${checkedCount})`;
+      }
+
+      dropdownBtn.addEventListener('click', () => {
+        dropdownMenu.classList.toggle('hidden');
+      });
+
+      selectAllBtn.addEventListener('click', () => {
+        dropdownMenu.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+        applyFilters();
+      });
+
+      clearAllBtn.addEventListener('click', () => {
+        dropdownMenu.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+        applyFilters();
+      });
+
+      dropdownMenu.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+          updateCount();
+          applyFilters();
+        });
+      });
+
+      updateCount();
+    }
+    
+    function setupEventListeners() {
+      // Dropdown toggles
+      document.querySelectorAll('.collapsible-header').forEach(header => {
+        header.addEventListener('click', () => {
+          const targetId = header.getAttribute('data-target');
+          const targetContent = document.getElementById(targetId);
+          const icon = header.querySelector('.collapsible-icon');
+          targetContent.classList.toggle('expanded');
+          icon.style.transform = targetContent.classList.contains('expanded') ? 'rotate(180deg)' : 'rotate(0deg)';
+        });
+      });
+
+      // Filter and search inputs
+      document.getElementById('q').addEventListener('input', applyFilters);
+      document.getElementById('dateExact').addEventListener('change', applyFilters);
+      
+      // Filter dropdowns
+      document.getElementById('monthDropdownBtn').addEventListener('click', () => document.getElementById('monthDropdownMenu').classList.toggle('hidden'));
+      document.getElementById('vehicleDropdownBtn').addEventListener('click', () => document.getElementById('vehicleDropdownMenu').classList.toggle('hidden'));
+      
+      // Chart controls
+      document.getElementById('tsAgg').addEventListener('change', updateTimeSeriesChart);
+      document.getElementById('tsMetric').addEventListener('change', updateTimeSeriesChart);
+      document.getElementById('vwSearch').addEventListener('input', updateVehicleWeightChart);
+      document.getElementById('vwTopN').addEventListener('input', updateVehicleWeightChart);
+      document.getElementById('vtSearch').addEventListener('input', updateVehicleTripsChart);
+      document.getElementById('vtTopN').addEventListener('input', updateVehicleTripsChart);
+      
+      // Vehicle Analysis
+      document.getElementById('vaSearch').addEventListener('input', applyFilters);
+      document.getElementById('vaYear').addEventListener('input', applyFilters);
+      document.getElementById('vaSort').addEventListener('change', applyFilters);
+      
+      // Driver Analysis
+      document.getElementById('driverSort').addEventListener('change', applyFilters);
+      document.getElementById('driverTopN').addEventListener('input', applyFilters);
+      document.getElementById('driverSearch').addEventListener('input', applyFilters);
+
+      // Pagination
+      document.getElementById('pageSize').addEventListener('change', (e) => { pageSize = e.target.value; currentPage = 1; populateTripTable(); });
+      document.getElementById('prevPage').addEventListener('click', () => { if (currentPage > 1) { currentPage--; populateTripTable(); } });
+      document.getElementById('nextPage').addEventListener('click', () => { if (currentPage < Math.ceil(VIEW.length / pageSize)) { currentPage++; populateTripTable(); } });
+      document.getElementById('prevPage2').addEventListener('click', () => { if (currentPage > 1) { currentPage--; populateTripTable(); } });
+      document.getElementById('nextPage2').addEventListener('click', () => { if (currentPage < Math.ceil(VIEW.length / pageSize)) { currentPage++; populateTripTable(); } });
+
+      // Action buttons
+      document.getElementById('resetBtn').addEventListener('click', () => { location.reload(); });
+      document.getElementById('refreshBtn').addEventListener('click', init);
+      document.getElementById('btnCSV').addEventListener('click', () => exportToCSV(VIEW, "تقرير_الرحلات.csv"));
+      document.getElementById('btnXLSX').addEventListener('click', exportToXLSX);
+      document.getElementById('btnPDF').addEventListener('click', exportToPDF);
+      document.getElementById('btnDriversCSV').addEventListener('click', () => {
+        const driverSummary = Object.entries(byDriverTrips).map(([driver, trips]) => ({
+            "السائق": driver,
+            "عدد الرحلات": trips,
+            "الوزن (طن)": formatTonFromKg(byDriverWeight[driver]),
+            "متوسط/رحلة (طن)": formatTonFromKg(byDriverWeight[driver] / trips),
+            "عدد المركبات": driverVehicles[driver]?.size || 0,
+            "المركبات": Array.from(driverVehicles[driver] || []).join(", ")
+        }));
+        exportToCSV(driverSummary, "تحليل_السائقين.csv");
+      });
+    }
+
+    async function init() {
+      await Promise.all([
+        fetchData(CSV_URL, 'الرحلات'),
+        fetchData(VEH_URL, 'المركبات'),
+        fetchData(FUEL_URL, 'الوقود'),
+        fetchData(MAINTENANCE_URL, 'الصيانة')
+      ]);
+
+      if (dataLoaded && vehiclesLoaded && fuelLoaded && maintenanceLoaded) {
+        VIEW = [...ALL];
+        const uniqueMonths = [...new Set(ALL.map(r => String(r[COL.month] || "").trim()))].filter(Boolean);
+        const uniqueVehicles = [...new Set(ALL.map(r => String(r[COL.vehicle] || "").trim()))].filter(Boolean);
+        
+        // Populate dropdowns
+        setupDropdown('monthDropdownBtn', 'monthDropdownMenu', 'monthSelectAll', 'monthClearAll', 'monthCount', uniqueMonths.map(m => ({'month': m})), 'month');
+        setupDropdown('vehicleDropdownBtn', 'vehicleDropdownMenu', 'vehSelectAll', 'vehClearAll', 'vehicleCount', uniqueVehicles.map(v => ({'vehicle': v})), 'vehicle');
+        
+        // Initial render
+        renderUI();
+        
+        // Initial chart setup
+        createTimeSeriesChart({ labels: [], datasets: [{ label: 'إجمالي الوزن (طن)', data: [], backgroundColor: 'rgba(59, 130, 246, 0.7)', borderColor: 'rgb(59, 130, 246)', borderWidth: 1 }] });
+        createVehicleWeightChart({ labels: [], datasets: [{ label: 'الوزن (طن)', data: [], backgroundColor: 'rgba(59, 130, 246, 0.7)' }] });
+        createVehicleTripsChart({ labels: [], datasets: [{ data: [], backgroundColor: ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#8b5cf6', '#ec4899', '#6b7280', '#0f766e'] }] });
+        
+        setupEventListeners();
+        
+        document.getElementById('k_totalFuelCost').textContent = FUEL.reduce((sum, r) => sum + Object.values(r).slice(1).reduce((s, v) => s + toNumber(v), 0), 0).toLocaleString();
+        document.getElementById('k_totalMaintenanceCost').textContent = MAINTENANCE.reduce((sum, r) => sum + toNumber(r[MAINT_COLS.cost]), 0).toLocaleString();
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
-
-
-    /* ===== تعبئة فلاتر الشهور والمركبات ===== */
-    const MONTH_NAMES = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
-
-    function populateMonthFilter() {
-      const monthDropdownMenu = document.getElementById("monthDropdownMenu");
-      monthDropdownMenu.innerHTML = '';
-      MONTH_NAMES.forEach((month, index) => {
-        const div = document.createElement('div');
-        div.className = 'flex items-center px-4 py-2 hover:bg-gray-100';
-        div.innerHTML = `
-          <input type="checkbox" id="month-${index}" value="${month}" class="form-checkbox h-4 w-4 text-blue-600 rounded" checked>
-          <label for="month-${index}" class="ml-2 text-sm text-gray-700 w-full">${month}</label>
-        `;
-        monthDropdownMenu.appendChild(div);
-      });
-      monthDropdownMenu.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-        checkbox.addEventListener('change', updateAll);
-      });
-    }
-
-    function populateVehicleFilter() {
-      const vehicleDropdownMenu = document.getElementById("vehicleDropdownMenu");
-      vehicleDropdownMenu.innerHTML = '';
-      const uniqueVehicles = [...new Set(ALL.map(r => String(r[COL.vehicle] || "").trim()))].sort();
-      uniqueVehicles.forEach((vehicle, index) => {
-        const div = document.createElement('div');
-        div.className = 'flex items-center px-4 py-2 hover:bg-gray-100';
-        div.innerHTML = `
-          <input type="checkbox" id="vehicle-${index}" value="${vehicle}" class="form-checkbox h-4 w-4 text-blue-600 rounded" checked>
-          <label for="vehicle-${index}" class="ml-2 text-sm text-gray-700 w-full">${vehicle}</label>
-        `;
-        vehicleDropdownMenu.appendChild(div);
-      });
-      vehicleDropdownMenu.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-        checkbox.addEventListener('change', updateAll);
-      });
-    }
-
-
