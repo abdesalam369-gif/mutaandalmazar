@@ -67,9 +67,7 @@
       color: #1e293b;
       letter-spacing: 1px;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -96,7 +94,6 @@
         <div class="menu" id="monMenu"></div>
       </div>
       <button class="reset-btn" onclick="resetFilters()">إعادة تعيين</button>
-      <!-- زر طباعة المؤشرات -->
       <button class="print-btn" onclick="printKPIs()">طباعة المؤشرات</button>
     </div>
   </header>
@@ -124,7 +121,6 @@
             <option value="trips">عدد الرحلات</option>
             <option value="tons">الأوزان (طن)</option>
           </select>
-          <!-- زر طباعة الشارت -->
           <button class="print-btn" onclick="printChart()">طباعة الشارت</button>
         </div>
         <canvas id="chart"></canvas>
@@ -151,7 +147,6 @@
             <option value="cost_trip">كلفة الرحلة</option>
             <option value="cost_ton">كلفة الطن</option>
           </select>
-          <!-- زر طباعة الجدول -->
           <button class="print-btn" onclick="printTable()">طباعة الجدول</button>
         </div>
         <table>
@@ -366,21 +361,37 @@
       else{ sec.style.display='block'; arrow.style.transform='rotate(180deg)'; }
     }
 
-    /* دوال الطباعة */
+    /* طباعة المؤشرات بالتصميم الأصلي وبدون فلاتر */
     function printKPIs(){
-      const header = document.querySelector("header").outerHTML;
+      const header = document.querySelector("header").cloneNode(true);
+      const filters = header.querySelector(".filters");
+      if(filters) filters.remove();
       const kpis = document.querySelector(".kpis").outerHTML;
+
       const html = `
       <html><head><meta charset="UTF-8"><title>طباعة المؤشرات</title>
       <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-      <style>body{direction:rtl;font-family:"Cairo",sans-serif;margin:24px}
-      .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
-      .card{border:1px solid #e5e7eb;border-radius:12px;padding:16px}</style>
-      </head><body>${header}${kpis}</body></html>`;
+      <style>
+        body { direction:rtl; font-family:"Cairo",sans-serif; background:#f8fafc; margin:0; padding:20px; color:#1e293b; }
+        header { background:linear-gradient(90deg,#2563eb,#0ea5e9); color:#fff; padding:20px 24px; border-radius:12px; margin-bottom:20px; }
+        header h1 { margin:0; font-size:20px; font-weight:700; line-height:1.6; }
+        .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; }
+        .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.06); }
+        .kpi .value { font-size:26px; font-weight:700; margin-bottom:6px; }
+        .kpi .label { font-size:13px; color:#64748b; }
+      </style>
+      </head><body>
+      ${header.outerHTML}
+      ${kpis}
+      </body></html>`;
+
       const w = window.open("", "_blank");
-      w.document.write(html); w.document.close(); w.print();
+      w.document.write(html); 
+      w.document.close(); 
+      w.print();
     }
 
+    /* طباعة الشارت كصورة */
     function printChart(){
       const canvas = document.getElementById("chart");
       if(!canvas) return;
@@ -393,6 +404,7 @@
       w.document.write(html); w.document.close(); w.print();
     }
 
+    /* طباعة الجدول مع العناوين */
     function printTable(){
       const tbody = document.getElementById("fullTable");
       if(!tbody) return;
