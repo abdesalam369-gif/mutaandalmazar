@@ -27,9 +27,18 @@
     .card:hover { transform:translateY(-2px); }
     .kpi .value { font-size:26px; font-weight:700; margin-bottom:6px; }
     .kpi .label { font-size:13px; color:#0b1020; font-weight:700; } /* العنوان أسود */
+
     /* ألوان القيم */
-    .val-blue{color:#2563eb}.val-cyan{color:#0ea5e9}.val-orange{color:#f97316}.val-red{color:#dc2626}
-    .val-green{color:#16a34a}.val-purple{color:#7c3aed}.val-pink{color:#db2777}.val-slate{color:#475569}
+    .val-blue{color:#2563eb}
+    .val-cyan{color:#0ea5e9}
+    .val-orange{color:#f97316}
+    .val-red{color:#dc2626}
+    .val-green{color:#16a34a}
+    .val-purple{color:#7c3aed}
+    .val-pink{color:#db2777}
+    .val-slate{color:#475569}
+    .val-indigo{color:#4f46e5} /* أعلى مركبة رحلات */
+    .val-teal{color:#14b8a6}   /* أعلى مركبة وزن */
 
     .toggle { background:#f1f5f9; padding:14px 16px; border-radius:12px; cursor:pointer; margin-bottom:8px; font-weight:600; display:flex; justify-content:space-between; align-items:center; transition:background .2s; }
     .toggle:hover { background:#e2e8f0; }
@@ -66,10 +75,7 @@
       margin-bottom: 18px;
     }
     #loader .text {
-      font-size: 20px;
-      font-weight: 700;
-      color: #1e293b;
-      letter-spacing: 1px;
+      font-size: 20px; font-weight: 700; color: #1e293b; letter-spacing: 1px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
@@ -115,8 +121,8 @@
       <div class="card kpi"><div class="value val-pink"   id="k_operational_days">—</div><div class="label">عدد الأيام التشغيلية</div></div>
 
       <div class="card kpi"><div class="value val-purple" id="k_active_veh">—</div><div class="label">عدد المركبات النشطة</div></div>
-      <div class="card kpi"><div class="value val-slate"  id="k_top_trips">—</div><div class="label">أعلى مركبة رحلات</div></div>
-      <div class="card kpi"><div class="value val-slate"  id="k_top_tons">—</div><div class="label">أعلى مركبة وزن</div></div>
+      <div class="card kpi"><div class="value val-indigo" id="k_top_trips">—</div><div class="label">أعلى مركبة رحلات</div></div>
+      <div class="card kpi"><div class="value val-teal"   id="k_top_tons">—</div><div class="label">أعلى مركبة وزن</div></div>
     </div>
 
     <!-- شارت السلاسل الزمنية -->
@@ -183,11 +189,11 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
   <script>
     const CONFIG = {
-      trips: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=0&single=true&output=csv",
-      vehicles: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=2001178330&single=true&output=csv",
-      fuel: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=1380959426&single=true&output=csv",
-      maint: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSزDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=2095309457&single=true&output=csv",
-      areas: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSزDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=158998441&single=true&output=csv"
+      trips:  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=0&single=true&output=csv",
+      vehicles:"https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=2001178330&single=true&output=csv",
+      fuel:   "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=1380959426&single=true&output=csv",
+      maint:  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=2095309457&single=true&output=csv",
+      areas:  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=158998441&single=true&output=csv"
     };
 
     const MONTHS_ORDER = ["jan","feb","mar","apr","may","jun","july","aug","sep","oct","nov","dec"];
@@ -272,7 +278,7 @@
       const activeVeh = new Set(data.map(r=>r["رقم المركبة"]).filter(Boolean));
       document.getElementById("k_active_veh").textContent = activeVeh.size || 0;
 
-      // الوقود (يحترم فلتر الأشهر) والصيانة
+      // الوقود والصيانة
       let totalFuel=0, totalMaint=0;
       activeVeh.forEach(v=>{
         totalFuel += sumFuelForVehicle(v);
@@ -430,7 +436,7 @@
       else{ sec.style.display='block'; arrow.style.transform='rotate(180deg)'; }
     }
 
-    /* طباعة المؤشرات بالتصميم الأصلي وبدون فلاتر */
+    /* طباعة المؤشرات */
     function printKPIs(){
       const header = document.querySelector("header").cloneNode(true);
       const filters = header.querySelector(".filters");
@@ -450,6 +456,7 @@
         .kpi .label { font-size:13px; color:#0b1020; font-weight:700; }
         .val-blue{color:#2563eb}.val-cyan{color:#0ea5e9}.val-orange{color:#f97316}.val-red{color:#dc2626}
         .val-green{color:#16a34a}.val-purple{color:#7c3aed}.val-pink{color:#db2777}.val-slate{color:#475569}
+        .val-indigo{color:#4f46e5}.val-teal{color:#14b8a6}
       </style>
       </head><body>
       ${header.outerHTML}
@@ -475,7 +482,7 @@
       w.document.write(html); w.document.close(); w.print();
     }
 
-    /* طباعة الجدول مع العناوين */
+    /* طباعة الجدول */
     function printTable(){
       const tbody = document.getElementById("fullTable");
       if(!tbody) return;
