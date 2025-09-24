@@ -18,7 +18,7 @@
     .menu input { accent-color:#2563eb; }
     .reset-btn { padding:8px 12px; border:none; border-radius:8px; background:#ef4444; color:#fff; font-size:14px; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.1); transition:background .2s; }
     .reset-btn:hover { background:#dc2626; }
-    .print-btn { padding:8px 12px; border:none; border-radius:8px; background:#10b981; color:#fff; font-size:14px; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.1); transition:background .2س; }
+    .print-btn { padding:8px 12px; border:none; border-radius:8px; background:#10b981; color:#fff; font-size:14px; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.1); transition:background .2s; }
     .print-btn:hover { background:#059669; }
 
     .container { padding:20px; max-width:1300px; margin:auto; }
@@ -26,8 +26,12 @@
     .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.06); transition:transform .2s; margin-bottom:20px; }
     .card:hover { transform:translateY(-2px); }
     .kpi .value { font-size:26px; font-weight:700; margin-bottom:6px; }
-    .kpi .label { font-size:13px; color:#64748b; }
-    .toggle { background:#f1ف5f9; padding:14px 16px; border-radius:12px; cursor:pointer; margin-bottom:8px; font-weight:600; display:flex; justify-content:space-between; align-items:center; transition:background .2s; }
+    .kpi .label { font-size:13px; color:#0b1020; font-weight:700; } /* العنوان أسود */
+    /* ألوان القيم */
+    .val-blue{color:#2563eb}.val-cyan{color:#0ea5e9}.val-orange{color:#f97316}.val-red{color:#dc2626}
+    .val-green{color:#16a34a}.val-purple{color:#7c3aed}.val-pink{color:#db2777}.val-slate{color:#475569}
+
+    .toggle { background:#f1f5f9; padding:14px 16px; border-radius:12px; cursor:pointer; margin-bottom:8px; font-weight:600; display:flex; justify-content:space-between; align-items:center; transition:background .2s; }
     .toggle:hover { background:#e2e8f0; }
     .toggle .arrow { transition:transform .3s ease; }
     .section { display:none; padding:10px 0; }
@@ -101,17 +105,18 @@
   <div class="container">
     <!-- KPIs -->
     <div class="kpis">
-      <div class="card kpi"><div class="value" id="k_tons">—</div><div class="label">إجمالي الأطنان</div></div>
-      <div class="card kpi"><div class="value" id="k_trips">—</div><div class="label">إجمالي الرحلات</div></div>
+      <div class="card kpi"><div class="value val-blue"   id="k_tons">—</div><div class="label">إجمالي الأطنان</div></div>
+      <div class="card kpi"><div class="value val-cyan"   id="k_trips">—</div><div class="label">إجمالي الرحلات</div></div>
 
-      <div class="card kpi"><div class="value" id="k_fuel_total">—</div><div class="label">إجمالي كلفة الوقود</div></div>
-      <div class="card kpi"><div class="value" id="k_maint_total">—</div><div class="label">إجمالي كلفة الصيانة</div></div>
-      <div class="card kpi"><div class="value" id="k_avg_tons_day">—</div><div class="label">متوسط النفايات/اليوم</div></div>
-      <div class="card kpi"><div class="value" id="k_avg_cost_ton">—</div><div class="label">متوسط كلفة الطن</div></div>
-      <div class="card kpi"><div class="value" id="k_avg_cost_trip">—</div><div class="label">متوسط كلفة الرحلة</div></div>
-      <div class="card kpi"><div class="value" id="k_active_veh">—</div><div class="label">عدد المركبات النشطة</div></div>
-      <div class="card kpi"><div class="value" id="k_top_trips">—</div><div class="label">أعلى مركبة رحلات</div></div>
-      <div class="card kpi"><div class="value" id="k_top_tons">—</div><div class="label">أعلى مركبة وزن</div></div>
+      <div class="card kpi"><div class="value val-orange" id="k_fuel_total">—</div><div class="label">إجمالي كلفة الوقود</div></div>
+      <div class="card kpi"><div class="value val-red"    id="k_maint_total">—</div><div class="label">إجمالي كلفة الصيانة</div></div>
+
+      <div class="card kpi"><div class="value val-green"  id="k_avg_tons_day">—</div><div class="label">متوسط النفايات/اليوم</div></div>
+      <div class="card kpi"><div class="value val-pink"   id="k_operational_days">—</div><div class="label">عدد الأيام التشغيلية</div></div>
+
+      <div class="card kpi"><div class="value val-purple" id="k_active_veh">—</div><div class="label">عدد المركبات النشطة</div></div>
+      <div class="card kpi"><div class="value val-slate"  id="k_top_trips">—</div><div class="label">أعلى مركبة رحلات</div></div>
+      <div class="card kpi"><div class="value val-slate"  id="k_top_tons">—</div><div class="label">أعلى مركبة وزن</div></div>
     </div>
 
     <!-- شارت السلاسل الزمنية -->
@@ -181,8 +186,8 @@
       trips: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=0&single=true&output=csv",
       vehicles: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=2001178330&single=true&output=csv",
       fuel: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=1380959426&single=true&output=csv",
-      maint: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=2095309457&single=true&output=csv",
-      areas: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSzDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=158998441&single=true&output=csv"
+      maint: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSزDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=2095309457&single=true&output=csv",
+      areas: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFzqaKeM6Il-c1ubOzGHSزDWgfbW3URTWvTcF76Xx3HP-W5o_SDRozUeO_v5z-xits7UFpNxjdfC3w/pub?gid=158998441&single=true&output=csv"
     };
 
     const MONTHS_ORDER = ["jan","feb","mar","apr","may","jun","july","aug","sep","oct","nov","dec"];
@@ -257,18 +262,17 @@
     function renderAll(){
       const data=applyFilters();
 
-      // إجمالي الرحلات والأطنان
+      // إجماليات أساسية
       const totalTrips=data.length;
       const totalTons=data.reduce((s,x)=> s + ((+x["صافي التحميل"]||0)/1000),0);
-
       document.getElementById("k_tons").textContent=Math.round(totalTons);
       document.getElementById("k_trips").textContent=totalTrips;
 
-      // مركبات نشطة
+      // المركبات النشطة
       const activeVeh = new Set(data.map(r=>r["رقم المركبة"]).filter(Boolean));
       document.getElementById("k_active_veh").textContent = activeVeh.size || 0;
 
-      // إجمالي الوقود (محترم لفلاتر الأشهر) وإجمالي الصيانة (غير شهري)
+      // الوقود (يحترم فلتر الأشهر) والصيانة
       let totalFuel=0, totalMaint=0;
       activeVeh.forEach(v=>{
         totalFuel += sumFuelForVehicle(v);
@@ -277,10 +281,7 @@
       document.getElementById("k_fuel_total").textContent = Math.round(totalFuel);
       document.getElementById("k_maint_total").textContent = Math.round(totalMaint);
 
-      // تكلفة كلية
-      const totalCost = totalFuel + totalMaint;
-
-      // متوسطات
+      // الأيام التشغيلية ومتوسط النفايات/اليوم
       const daysSet = new Set();
       data.forEach(r=>{
         const d=new Date(r["تاريخ التوزين الثاني"]);
@@ -288,15 +289,11 @@
       });
       const daysCount = daysSet.size;
       const avgTonsPerDay = daysCount ? (totalTons / daysCount) : 0;
-      const avgCostPerTrip = totalTrips ? (totalCost / totalTrips) : 0;
-      const avgCostPerTon  = totalTons ? (totalCost / totalTons) : 0;
-
+      document.getElementById("k_operational_days").textContent = daysCount;
       document.getElementById("k_avg_tons_day").textContent = avgTonsPerDay.toFixed(1);
-      document.getElementById("k_avg_cost_trip").textContent = avgCostPerTrip.toFixed(1);
-      document.getElementById("k_avg_cost_ton").textContent  = avgCostPerTon.toFixed(1);
 
-      // أعلى مركبة بالرحلات والوزن
-      const agg={}; // veh -> {trips, tons}
+      // أعلى مركبة رحلات ووزن
+      const agg={};
       data.forEach(r=>{
         const v=r["رقم المركبة"]; if(!v) return;
         if(!agg[v]) agg[v]={trips:0, tons:0};
@@ -438,7 +435,7 @@
       const header = document.querySelector("header").cloneNode(true);
       const filters = header.querySelector(".filters");
       if(filters) filters.remove();
-      const kpis = document.querySelector(".kpis").outerHTML;
+      const kpisHTML = document.querySelector(".kpis").outerHTML;
 
       const html = `
       <html><head><meta charset="UTF-8"><title>طباعة المؤشرات</title>
@@ -450,11 +447,13 @@
         .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; }
         .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.06); }
         .kpi .value { font-size:26px; font-weight:700; margin-bottom:6px; }
-        .kpi .label { font-size:13px; color:#64748b; }
+        .kpi .label { font-size:13px; color:#0b1020; font-weight:700; }
+        .val-blue{color:#2563eb}.val-cyan{color:#0ea5e9}.val-orange{color:#f97316}.val-red{color:#dc2626}
+        .val-green{color:#16a34a}.val-purple{color:#7c3aed}.val-pink{color:#db2777}.val-slate{color:#475569}
       </style>
       </head><body>
       ${header.outerHTML}
-      ${kpis}
+      ${kpisHTML}
       </body></html>`;
 
       const w = window.open("", "_blank");
