@@ -81,9 +81,10 @@
     <h1>
       بيانات نقل النفايات<br>
       بلدية مؤتة والمزار<br>
-      2025
+      <span id="yearTitle"></span>
     </h1>
     <div class="filters">
+      <select id="yearFilter"></select>
       <div class="dropdown">
         <button onclick="toggleMenu('vehMenu')">المركبات ▼</button>
         <div class="menu" id="vehMenu"></div>
@@ -217,6 +218,8 @@
     let tripsData=[], vehiclesData=[], fuelData=[], maintData=[], areasData=[];
     let chart;
 
+    let activeYear = null;
+
     // تنسيق أرقام: فاصلة آلاف + عدد منازل عشري اختياري
     function fmt(num, digits=0){
       const n = Number(num);
@@ -235,8 +238,31 @@
       });
     }
 
+    function buildYearFilter(){
+      const sel = document.getElementById("yearFilter");
+      if(!sel) return;
+
+      const years = [...new Set(tripsData.map(r => r["السنة"]).filter(v => v!==null && v!==undefined && String(v).trim()!==""))];
+      years.sort((a,b)=> (Number(b)||0) - (Number(a)||0));
+
+      sel.innerHTML = "";
+      years.forEach(y=>{
+        sel.insertAdjacentHTML("beforeend", `<option value="${y}">${y}</option>`);
+      });
+
+      activeYear = years.length ? years[0] : null;
+
+      sel.value = activeYear;
+
+      sel.onchange = function(){
+        activeYear = sel.value;
+        renderAll();
+      };
+    }
+
     async function loadData(){
       tripsData = await fetchCSV(CONFIG.trips);
+      buildYearFilter();
       vehiclesData = await fetchCSV(CONFIG.vehicles);
       fuelData = await fetchCSV(CONFIG.fuel);
       maintData = await fetchCSV(CONFIG.maint);
@@ -273,23 +299,26 @@
 
     function applyFilters(){
       let d=[...tripsData];
+      d = d.filter(r => String(r["السنة"]) === String(activeYear));
       if(filters.vehicles.size) d=d.filter(r=>filters.vehicles.has(r["رقم المركبة"]));
       if(filters.months.size) d=d.filter(r=>filters.months.has((r["الشهر"]||"").toLowerCase()));
       return d;
     }
 
     function sumFuelForVehicle(veh){
-      const row=fuelData.find(x=>x["رقم المركبة"]===veh);
+      const row=fuelData.find(x=>x["رقم المركبة"]===veh && String(x["السنة"])===String(activeYear));
       if(!row) return 0;
       const months = filters.months.size ? Array.from(filters.months) : MONTHS_ORDER;
       return months.reduce((s,m)=> s + (+row[m]||0), 0);
     }
     function maintForVehicle(veh){
-      const row=maintData.find(x=>x["رقم المركبة"]===veh);
+      const row=maintData.find(x=>x["رقم المركبة"]===veh && String(x["السنة"])===String(activeYear));
       return row ? (+row["كلفة الصيانة"]||0) : 0;
     }
 
     function renderAll(){
+      document.getElementById("yearTitle").textContent = activeYear;
+
       const data=applyFilters();
 
       // إجماليات أساسية
