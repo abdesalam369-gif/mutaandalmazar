@@ -1,163 +1,70 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>بيانات نقل النفايات | بلدية مؤتة والمزار</title>
+<meta charset="UTF-8">
+<title>لوحة التحكم | بلدية مؤتة والمزار</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <style>
-    body {
-      font-family: "Cairo", sans-serif;
-      background:#f8fafc;
-      margin:0;
-      padding:0;
-      color:#1e293b;
-    }
-
-    header {
-      background:linear-gradient(90deg,#2563eb,#0ea5e9);
-      color:#fff;
-      padding:20px 24px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      box-shadow:0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    header h1 {
-      margin:0;
-      font-size:20px;
-      font-weight:700;
-      line-height:1.6;
-    }
-
-    .filters {
-      display:flex;
-      gap:8px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-
-    .dropdown {
-      position:relative;
-    }
-
-    .dropdown button {
-      padding:8px 14px;
-      border:none;
-      border-radius:8px;
-      background:#fff;
-      color:#1e293b;
-      font-size:14px;
-      cursor:pointer;
-      box-shadow:0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .menu {
-      display:none;
-      position:absolute;
-      right:0;
-      background:#fff;
-      border-radius:10px;
-      margin-top:5px;
-      min-width:150px;
-      z-index:10;
-      box-shadow:0 4px 10px rgba(0,0,0,0.12);
-      padding:6px 0;
-      max-height:250px;
-      overflow:auto;
-    }
-
-    .menu label {
-      display:block;
-      padding:8px 12px;
-      font-size:14px;
-      cursor:pointer;
-      color:#1e293b;
-    }
-
-    .menu input {
-      accent-color:#2563eb;
-    }
-
-    .reset-btn {
-      padding:8px 12px;
-      border:none;
-      border-radius:8px;
-      background:#ef4444;
-      color:#fff;
-      font-size:14px;
-      cursor:pointer;
-    }
-
-    .print-btn {
-      padding:8px 12px;
-      border:none;
-      border-radius:8px;
-      background:#10b981;
-      color:#fff;
-      font-size:14px;
-      cursor:pointer;
-    }
-
-    /* اختيار السنة */
-    #yearFilter {
-      padding:8px 12px;
-      border-radius:8px;
-      border:none;
-      font-family:"Cairo",sans-serif;
-      font-size:14px;
-      background:#fff;
-      cursor:pointer;
-    }
-
-    .container {
-      padding:20px;
-      max-width:1300px;
-      margin:auto;
-    }
-
-    .kpis {
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-      gap:16px;
-      margin-bottom:20px;
-    }
-
-    .card {
-      background:#fff;
-      border-radius:14px;
-      padding:20px;
-      box-shadow:0 2px 10px rgba(0,0,0,0.06);
-      margin-bottom:20px;
-    }
-  </style>
+<style>
+body{
+  font-family:"Cairo",sans-serif;
+  background:#f8fafc;
+  margin:0;
+  color:#1e293b;
+}
+header{
+  background:linear-gradient(90deg,#2563eb,#0ea5e9);
+  color:#fff;
+  padding:20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.filters{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+select,button{
+  padding:8px 12px;
+  border-radius:8px;
+  border:none;
+  font-family:"Cairo",sans-serif;
+  cursor:pointer;
+}
+button{
+  background:#10b981;
+  color:#fff;
+}
+.reset-btn{background:#ef4444;}
+.container{
+  padding:20px;
+  max-width:1300px;
+  margin:auto;
+}
+.kpis{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:16px;
+}
+.card{
+  background:#fff;
+  padding:20px;
+  border-radius:14px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.06);
+}
+.value{
+  font-size:24px;
+  font-weight:700;
+}
+</style>
 </head>
 
 <body>
 
-<!-- شاشة التحميل -->
-<div id="loader" style="
-  position:fixed;
-  inset:0;
-  background:rgba(248,250,252,0.95);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex-direction:column;
-  z-index:9999;
-">
-  <div style="
-    width:70px;
-    height:70px;
-    border:6px solid transparent;
-    border-top:6px solid #2563eb;
-    border-radius:50%;
-    animation:spin 1s linear infinite;
-    margin-bottom:18px;
-  "></div>
-  <div style="font-size:20px;font-weight:700;">جاري التحميل...</div>
+<div id="loader" style="position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;">
+جاري التحميل...
 </div>
 
 <header>
@@ -168,383 +75,113 @@
   </h1>
 
   <div class="filters">
-
-    <!-- اختيار السنة -->
     <select id="yearFilter"></select>
-
-    <div class="dropdown">
-      <button onclick="toggleMenu('vehMenu')">المركبات ▼</button>
-      <div class="menu" id="vehMenu"></div>
-    </div>
-
-    <div class="dropdown">
-      <button onclick="toggleMenu('monMenu')">الأشهر ▼</button>
-      <div class="menu" id="monMenu"></div>
-    </div>
-
     <button class="reset-btn" onclick="resetFilters()">إعادة تعيين</button>
-    <button class="print-btn" onclick="printKPIs()">طباعة المؤشرات</button>
-
   </div>
 </header>
 
 <div class="container">
-
-  <!-- KPIs -->
   <div class="kpis">
-    <div class="card"><div id="k_tons">—</div><div>إجمالي الأطنان</div></div>
-    <div class="card"><div id="k_trips">—</div><div>إجمالي الرحلات</div></div>
-    <div class="card"><div id="k_fuel_total">—</div><div>كلفة الوقود</div></div>
-    <div class="card"><div id="k_maint_total">—</div><div>كلفة الصيانة</div></div>
-    <div class="card"><div id="k_avg_tons_day">—</div><div>متوسط يومي</div></div>
-    <div class="card"><div id="k_operational_days">—</div><div>أيام تشغيل</div></div>
-    <div class="card"><div id="k_active_veh">—</div><div>مركبات نشطة</div></div>
-    <div class="card"><div id="k_top_trips">—</div><div>أعلى رحلات</div></div>
-    <div class="card"><div id="k_top_tons">—</div><div>أعلى وزن</div></div>
+    <div class="card"><div class="value" id="k_tons">—</div>إجمالي الأطنان</div>
+    <div class="card"><div class="value" id="k_trips">—</div>عدد الرحلات</div>
+    <div class="card"><div class="value" id="k_fuel">—</div>كلفة الوقود</div>
+    <div class="card"><div class="value" id="k_maint">—</div>كلفة الصيانة</div>
   </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
-
+</div>
 <script>
-/* ===============================
-   إعداد السنة الافتراضية
-================================ */
-const CURRENT_YEAR = new Date().getFullYear();
-let activeYear = CURRENT_YEAR;
-
-/* ===============================
-   روابط Google Sheets (كما هي)
-================================ */
 const CONFIG = {
-  trips:  "PUT_TRIPS_CSV_URL_HERE",
-  vehicles:"PUT_VEHICLES_CSV_URL_HERE",
-  fuel:   "PUT_FUEL_CSV_URL_HERE",
-  maint:  "PUT_MAINT_CSV_URL_HERE",
-  areas:  "PUT_AREAS_CSV_URL_HERE"
+  trips:   "PUT_TRIPS_CSV_URL_HERE",
+  fuel:    "PUT_FUEL_CSV_URL_HERE",
+  maint:   "PUT_MAINT_CSV_URL_HERE"
 };
 
-/* ===============================
-   متغيرات عامة
-================================ */
-let tripsData = [];
-let vehiclesData = [];
-let fuelData = [];
-let maintData = [];
-let areasData = [];
-let chart;
+let tripsData=[], fuelData=[], maintData=[];
+let activeYear=null;
 
-const MONTHS_ORDER = ["jan","feb","mar","apr","may","jun","july","aug","sep","oct","nov","dec"];
-
-let filters = {
-  vehicles: new Set(),
-  months: new Set()
-};
-
-/* ===============================
-   أدوات مساعدة
-================================ */
-function fmt(num, digits=0){
-  const n = Number(num);
-  if(!isFinite(n)) return "—";
-  return n.toLocaleString("en-US", {
-    minimumFractionDigits:digits,
-    maximumFractionDigits:digits
-  });
-}
-const fmtInt = (num)=>fmt(num,0);
-
-/* ===============================
-   قراءة CSV
-================================ */
 async function fetchCSV(url){
   const r = await fetch(url);
   const t = await r.text();
-  const lines = t.trim().split(/\r?\n/);
-  const head = lines.shift().split(",");
-
-  return lines.map(line=>{
-    const c = line.split(",");
-    let o = {};
-    head.forEach((h,i)=>{
-      o[h.trim()] = (c[i]||"").trim();
-    });
+  const rows = t.trim().split(/\r?\n/);
+  const head = rows.shift().split(",");
+  return rows.map(r=>{
+    const c=r.split(",");
+    let o={};
+    head.forEach((h,i)=>o[h.trim()]=(c[i]||"").trim());
     return o;
   });
 }
 
-/* ===============================
-   تحميل البيانات
-================================ */
 async function loadData(){
-  tripsData    = await fetchCSV(CONFIG.trips);
-  vehiclesData = await fetchCSV(CONFIG.vehicles);
-  fuelData     = await fetchCSV(CONFIG.fuel);
-  maintData    = await fetchCSV(CONFIG.maint);
-  areasData    = await fetchCSV(CONFIG.areas);
+  tripsData = await fetchCSV(CONFIG.trips);
+  fuelData  = await fetchCSV(CONFIG.fuel);
+  maintData = await fetchCSV(CONFIG.maint);
 
   buildYearFilter();
-  buildFilters();
   renderAll();
 
-  document.getElementById("loader").style.display = "none";
+  document.getElementById("loader").style.display="none";
 }
 
-/* ===============================
-   بناء اختيار السنة
-================================ */
 function buildYearFilter(){
-  const yearSelect = document.getElementById("yearFilter");
-  yearSelect.innerHTML = "";
+  const sel=document.getElementById("yearFilter");
+  sel.innerHTML="";
 
-  const years = [...new Set(tripsData.map(r => r["السنة"]).filter(Boolean))]
-    .map(y => Number(y))
+  const years=[...new Set(tripsData.map(r=>r["السنة"]).filter(Boolean))]
+    .map(Number)
     .sort((a,b)=>b-a);
 
-  years.forEach(y=>{
-    const opt = document.createElement("option");
-    opt.value = y;
-    opt.textContent = y;
-    if(y === CURRENT_YEAR) opt.selected = true;
-    yearSelect.appendChild(opt);
+  years.forEach((y,i)=>{
+    const o=document.createElement("option");
+    o.value=y;
+    o.textContent=y;
+    if(i===0){
+      o.selected=true;
+      activeYear=y;
+    }
+    sel.appendChild(o);
   });
 
-  activeYear = yearSelect.value;
-  yearSelect.onchange = ()=>{
-    activeYear = yearSelect.value;
+  sel.onchange=()=>{
+    activeYear=sel.value;
     renderAll();
   };
 }
 
-/* ===============================
-   بناء فلاتر المركبات والأشهر
-================================ */
-function buildFilters(){
-  const vehMenu = document.getElementById("vehMenu");
-  const monMenu = document.getElementById("monMenu");
-  vehMenu.innerHTML = "";
-  monMenu.innerHTML = "";
-
-  const vehicles = [...new Set(tripsData.map(r=>r["رقم المركبة"]).filter(Boolean))];
-  vehicles.forEach(v=>{
-    vehMenu.insertAdjacentHTML("beforeend",
-      `<label><input type="checkbox" value="${v}" onchange="toggleFilter('vehicles',this)"> ${v}</label>`
-    );
-  });
-
-  const months = [...new Set(tripsData.map(r=>(r["الشهر"]||"").toLowerCase()).filter(Boolean))];
-  months.forEach(m=>{
-    monMenu.insertAdjacentHTML("beforeend",
-      `<label><input type="checkbox" value="${m}" onchange="toggleFilter('months',this)"> ${m}</label>`
-    );
-  });
-}
-
-/* ===============================
-   التحكم بالفلاتر
-================================ */
-function toggleFilter(type, el){
-  if(el.checked) filters[type].add(el.value);
-  else filters[type].delete(el.value);
-  renderAll();
-}
-
 function resetFilters(){
-  filters.vehicles.clear();
-  filters.months.clear();
-  document.querySelectorAll('.menu input[type="checkbox"]').forEach(cb=>cb.checked=false);
   renderAll();
 }
-
-/* ===============================
-   فلترة البيانات (السنة + الباقي)
-================================ */
-function applyFilters(){
-  let d = [...tripsData];
-
-  d = d.filter(r => String(r["السنة"]) === String(activeYear));
-
-  if(filters.vehicles.size)
-    d = d.filter(r => filters.vehicles.has(r["رقم المركبة"]));
-
-  if(filters.months.size)
-    d = d.filter(r => filters.months.has((r["الشهر"]||"").toLowerCase()));
-
-  return d;
-}
-
-/* ===============================
-   تشغيل أولي
-================================ */
-loadData();
-</script>
 <script>
-/* ===============================
-   حساب الوقود والصيانة
-================================ */
-function sumFuelForVehicle(veh){
-  const rows = fuelData.filter(r =>
-    r["رقم المركبة"] === veh && String(r["السنة"]) === String(activeYear)
-  );
-  let total = 0;
-  rows.forEach(row=>{
-    Object.keys(row).forEach(k=>{
-      if(k !== "رقم المركبة" && k !== "السنة"){
-        total += (+row[k] || 0);
-      }
-    });
-  });
-  return total;
-}
-
-function maintForVehicle(veh){
-  const row = maintData.find(r =>
-    r["رقم المركبة"] === veh && String(r["السنة"]) === String(activeYear)
-  );
-  return row ? (+row["كلفة الصيانة"] || 0) : 0;
-}
-
-/* ===============================
-   التحديث العام للوحة
-================================ */
 function renderAll(){
-  const data = applyFilters();
+  if(!activeYear) return;
 
-  // تحديث عنوان السنة
-  const yearTitle = document.getElementById("yearTitle");
-  if(yearTitle) yearTitle.textContent = activeYear;
+  document.getElementById("yearTitle").textContent = activeYear;
 
-  // إجمالي الرحلات والأطنان
+  const data = tripsData.filter(r=>String(r["السنة"])===String(activeYear));
+
   const totalTrips = data.length;
-  const totalTons = data.reduce(
-    (s,x)=> s + ((+x["صافي التحميل"] || 0)/1000), 0
-  );
+  const totalTons = data.reduce((s,x)=>s+((+x["صافي التحميل"]||0)/1000),0);
 
-  document.getElementById("k_trips").textContent = fmtInt(totalTrips);
-  document.getElementById("k_tons").textContent  = fmtInt(Math.round(totalTons));
+  document.getElementById("k_trips").textContent = totalTrips.toLocaleString();
+  document.getElementById("k_tons").textContent  = Math.round(totalTons).toLocaleString();
 
-  // المركبات النشطة
-  const activeVeh = new Set(data.map(r=>r["رقم المركبة"]).filter(Boolean));
-  document.getElementById("k_active_veh").textContent = fmtInt(activeVeh.size);
+  let fuel=0;
+  fuelData.filter(r=>String(r["السنة"])===String(activeYear))
+    .forEach(r=>{
+      Object.keys(r).forEach(k=>{
+        if(k!=="رقم المركبة" && k!=="السنة")
+          fuel+= (+r[k]||0);
+      });
+    });
 
-  // الوقود والصيانة
-  let totalFuel = 0, totalMaint = 0;
-  activeVeh.forEach(v=>{
-    totalFuel  += sumFuelForVehicle(v);
-    totalMaint += maintForVehicle(v);
-  });
+  let maint=0;
+  maintData.filter(r=>String(r["السنة"])===String(activeYear))
+    .forEach(r=> maint+=(+r["كلفة الصيانة"]||0));
 
-  document.getElementById("k_fuel_total").textContent  = fmtInt(Math.round(totalFuel));
-  document.getElementById("k_maint_total").textContent = fmtInt(Math.round(totalMaint));
-
-  // الأيام التشغيلية
-  const daysSet = new Set();
-  data.forEach(r=>{
-    const d = new Date(r["تاريخ التوزين الثاني"]);
-    if(!isNaN(d)) daysSet.add(d.toISOString().split("T")[0]);
-  });
-  const daysCount = daysSet.size;
-  document.getElementById("k_operational_days").textContent = fmtInt(daysCount);
-
-  const avgTonsDay = daysCount ? totalTons / daysCount : 0;
-  document.getElementById("k_avg_tons_day").textContent = fmt(avgTonsDay,1);
-
-  // أعلى مركبة رحلات ووزن
-  const agg = {};
-  data.forEach(r=>{
-    const v = r["رقم المركبة"];
-    if(!v) return;
-    if(!agg[v]) agg[v] = {trips:0, tons:0};
-    agg[v].trips += 1;
-    agg[v].tons  += ((+r["صافي التحميل"]||0)/1000);
-  });
-
-  let topTripsVeh="—", topTripsVal=0;
-  let topTonsVeh ="—", topTonsVal =0;
-
-  Object.keys(agg).forEach(v=>{
-    if(agg[v].trips > topTripsVal){
-      topTripsVal = agg[v].trips;
-      topTripsVeh = v;
-    }
-    if(agg[v].tons > topTonsVal){
-      topTonsVal = agg[v].tons;
-      topTonsVeh = v;
-    }
-  });
-
-  document.getElementById("k_top_trips").textContent =
-    topTripsVal ? `${topTripsVeh} | ${fmtInt(topTripsVal)}` : "—";
-
-  document.getElementById("k_top_tons").textContent =
-    topTonsVal ? `${topTonsVeh} | ${fmt(topTonsVal,1)} طن` : "—";
-
-  renderChart(data);
+  document.getElementById("k_fuel").textContent  = Math.round(fuel).toLocaleString();
+  document.getElementById("k_maint").textContent = Math.round(maint).toLocaleString();
 }
 
-/* ===============================
-   الشارت الزمني
-================================ */
-function renderChart(data){
-  const grouped = {};
-  data.forEach(r=>{
-    const m = (r["الشهر"] || "").toLowerCase();
-    if(!m) return;
-    if(!grouped[m]) grouped[m] = 0;
-    grouped[m] += ((+r["صافي التحميل"]||0)/1000);
-  });
-
-  const labels = MONTHS_ORDER.filter(m=>m in grouped);
-  const values = labels.map(m=> Math.round(grouped[m]));
-
-  if(chart) chart.destroy();
-
-  const canvas = document.getElementById("chart");
-  if(!canvas) return;
-
-  chart = new Chart(canvas,{
-    type:"line",
-    data:{
-      labels:labels,
-      datasets:[{
-        label:"الأوزان (طن)",
-        data:values,
-        borderColor:"#2563eb",
-        tension:0.3,
-        fill:false
-      }]
-    },
-    options:{
-      scales:{ y:{ beginAtZero:true }},
-      plugins:{
-        datalabels:{
-          anchor:'end',
-          align:'top',
-          formatter:(v)=>fmtInt(v)
-        }
-      }
-    },
-    plugins:[ChartDataLabels]
-  });
-}
-
-/* ===============================
-   القوائم المنسدلة
-================================ */
-function toggleMenu(id){
-  document.querySelectorAll('.menu').forEach(m=>{
-    if(m.id !== id) m.style.display='none';
-  });
-  const menu = document.getElementById(id);
-  menu.style.display = (menu.style.display==='block'?'none':'block');
-}
-
-/* ===============================
-   الطباعة (كما هي)
-================================ */
-function printKPIs(){
-  window.print();
-}
+loadData();
 </script>
 
 </body>
