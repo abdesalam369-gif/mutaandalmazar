@@ -85,6 +85,7 @@
     </h1>
     <div class="filters">
       <select id="yearFilter"></select>
+      <select id="yearsCompare" multiple></select>
       <div class="dropdown">
         <button onclick="toggleMenu('vehMenu')">المركبات ▼</button>
         <div class="menu" id="vehMenu"></div>
@@ -219,6 +220,7 @@
     let chart;
 
     let activeYear = null;
+    let compareYears = [];
 
     // تنسيق أرقام: فاصلة آلاف + عدد منازل عشري اختياري
     function fmt(num, digits=0){
@@ -256,8 +258,38 @@
 
       sel.onchange = function(){
         activeYear = sel.value;
+        const cs = document.getElementById("yearsCompare");
+        if(cs){
+          const selected = Array.from(cs.selectedOptions || []).map(o=>String(o.value));
+          if(!selected.length){
+            compareYears = activeYear===null ? [] : [String(activeYear)];
+            Array.from(cs.options || []).forEach(opt=>{ opt.selected = (String(opt.value) === String(activeYear)); });
+          } else {
+            compareYears = selected;
+          }
+        }
         renderAll();
       };
+
+      const cmp = document.getElementById("yearsCompare");
+      if(cmp){
+        cmp.innerHTML = "";
+        years.forEach(y=>{
+          cmp.insertAdjacentHTML("beforeend", `<option value="${y}">${y}</option>`);
+        });
+
+        compareYears = activeYear===null ? [] : [String(activeYear)];
+        Array.from(cmp.options || []).forEach(opt=>{ opt.selected = (String(opt.value) === String(activeYear)); });
+
+        cmp.onchange = function(){
+          compareYears = Array.from(cmp.selectedOptions || []).map(o=>String(o.value));
+          if(!compareYears.length){
+            compareYears = activeYear===null ? [] : [String(activeYear)];
+            Array.from(cmp.options || []).forEach(opt=>{ opt.selected = (String(opt.value) === String(activeYear)); });
+          }
+          renderAll();
+        };
+      }
     }
 
     async function loadData(){
@@ -294,25 +326,30 @@
     function resetFilters(){
       filters.vehicles.clear(); filters.months.clear();
       document.querySelectorAll('.menu input[type="checkbox"]').forEach(cb=>cb.checked=false);
+      const cs = document.getElementById("yearsCompare");
+      if(cs){
+        compareYears = activeYear===null ? [] : [String(activeYear)];
+        Array.from(cs.options || []).forEach(opt=>{ opt.selected = (String(opt.value) === String(activeYear)); });
+      }
       renderAll();
     }
 
     function applyFilters(){
       let d=[...tripsData];
-      d = d.filter(r => String(r["السنة"]) === String(activeYear));
+      d = d.filter(r => compareYears.includes(String(r["السنة"])));
       if(filters.vehicles.size) d=d.filter(r=>filters.vehicles.has(r["رقم المركبة"]));
       if(filters.months.size) d=d.filter(r=>filters.months.has((r["الشهر"]||"").toLowerCase()));
       return d;
     }
 
-    function sumFuelForVehicle(veh){
-      const row=fuelData.find(x=>x["رقم المركبة"]===veh && String(x["السنة"])===String(activeYear));
+    function sumFuelForVehicle(veh, year){
+      const row=fuelData.find(x=>x["رقم المركبة"]===veh && String(x["السنة"])===String(year));
       if(!row) return 0;
       const months = filters.months.size ? Array.from(filters.months) : MONTHS_ORDER;
       return months.reduce((s,m)=> s + (+row[m]||0), 0);
     }
-    function maintForVehicle(veh){
-      const row=maintData.find(x=>x["رقم المركبة"]===veh && String(x["السنة"])===String(activeYear));
+    function maintForVehicle(veh, year){
+      const row=maintData.find(x=>x["رقم المركبة"]===veh && String(x["السنة"])===String(year));
       return row ? (+row["كلفة الصيانة"]||0) : 0;
     }
 
@@ -334,8 +371,10 @@
       // الوقود والصيانة
       let totalFuel=0, totalMaint=0;
       activeVeh.forEach(v=>{
-        totalFuel += sumFuelForVehicle(v);
-        totalMaint += maintForVehicle(v);
+        compareYears.forEach(y=>{
+          totalFuel += sumFuelForVehicle(v, y);
+          totalMaint += maintForVehicle(v, y);
+        });
       });
       document.getElementById("k_fuel_total").textContent  = fmtInt(Math.round(totalFuel));
       document.getElementById("k_maint_total").textContent = fmtInt(Math.round(totalMaint));
@@ -374,30 +413,51 @@
     function renderChart(data){
       const groupBy=document.getElementById("timeGroup").value;
       const metric=document.getElementById("metric").value;
-      const g={};
+
+      let labels=[], datasets=[];
+      const COLORS=["#2563eb","#dc2626","#16a34a","#7c3aed","#0ea5e9","#f97316","#db2777","#4f46e5","#14b8a6"];
+
       if(groupBy==="month"){
-        data.forEach(r=>{
-          const m=(r["الشهر"]||"").toLowerCase();
-          if(!g[m]) g[m]=0;
-          g[m]+= metric==="trips" ? 1 : Math.round((+r["صافي التحميل"]||0)/1000);
+        labels = MONTHS_ORDER.slice();
+        compareYears.forEach((yy,idx)=>{
+          const g={};
+          data.filter(r=>String(r["السنة"])===String(yy)).forEach(r=>{
+            const m=(r["الشهر"]||"").toLowerCase();
+            if(!g[m]) g[m]=0;
+            g[m]+= metric==="trips" ? 1 : Math.round((+r["صافي التحميل"]||0)/1000);
+          });
+          const vals = labels.map(m=>g[m]||0);
+          datasets.push({label:String(yy),data:vals,borderColor:COLORS[idx%COLORS.length],tension:0.3,fill:false});
         });
-        var labels=MONTHS_ORDER.filter(m=>m in g);
-        var vals=labels.map(m=>g[m]);
       } else {
-        data.forEach(r=>{
-          const d=new Date(r["تاريخ التوزين الثاني"]);
-          if(isNaN(d)) return;
-          const key=d.toISOString().split("T")[0];
-          if(!g[key]) g[key]=0;
-          g[key]+= metric==="trips" ? 1 : Math.round((+r["صافي التحميل"]||0)/1000);
+        const setLabels=new Set();
+        compareYears.forEach((yy)=>{
+          data.filter(r=>String(r["السنة"])===String(yy)).forEach(r=>{
+            const d=new Date(r["تاريخ التوزين الثاني"]);
+            if(isNaN(d)) return;
+            setLabels.add(d.toISOString().split("T")[0]);
+          });
         });
-        var labels=Object.keys(g).sort();
-        var vals=labels.map(k=>g[k]);
+        labels=Array.from(setLabels).sort();
+
+        compareYears.forEach((yy,idx)=>{
+          const g={};
+          data.filter(r=>String(r["السنة"])===String(yy)).forEach(r=>{
+            const d=new Date(r["تاريخ التوزين الثاني"]);
+            if(isNaN(d)) return;
+            const key=d.toISOString().split("T")[0];
+            if(!g[key]) g[key]=0;
+            g[key]+= metric==="trips" ? 1 : Math.round((+r["صافي التحميل"]||0)/1000);
+          });
+          const vals=labels.map(k=>g[k]||0);
+          datasets.push({label:String(yy),data:vals,borderColor:COLORS[idx%COLORS.length],tension:0.3,fill:false});
+        });
       }
+
       if(chart) chart.destroy();
       chart=new Chart(document.getElementById("chart"),{
         type:"line",
-        data:{labels:labels,datasets:[{label:metric==="trips"?"عدد الرحلات":"الأوزان (طن)",data:vals,borderColor:"#2563eb",tension:0.3,fill:false}]},
+        data:{labels:labels,datasets:datasets},
         options:{
           plugins:{
             datalabels:{
@@ -414,24 +474,31 @@
     function renderTable(){
       const tbody=document.getElementById("fullTable");
       tbody.innerHTML="";
+
+      const data=applyFilters();
+
       const vehGroups={};
-      tripsData.forEach(r=>{
+      data.forEach(r=>{
         const v=r["رقم المركبة"];
-        if(!vehGroups[v]) vehGroups[v]={trips:0,tons:0,drivers:new Set()};
-        vehGroups[v].trips+=1;
-        vehGroups[v].tons+=(+r["صافي التحميل"]||0)/1000;
-        if(r["السائق"]) vehGroups[v].drivers.add(r["السائق"]);
+        const y=String(r["السنة"]);
+        const key=v+"__"+y;
+        if(!vehGroups[key]) vehGroups[key]={veh:v,year_key:y,trips:0,tons:0,drivers:new Set()};
+        vehGroups[key].trips+=1;
+        vehGroups[key].tons+=(+r["صافي التحميل"]||0)/1000;
+        if(r["السائق"]) vehGroups[key].drivers.add(r["السائق"]);
       });
-      let arr=Object.keys(vehGroups).map(v=>{
-        const trips=vehGroups[v].trips;
-        const tons=vehGroups[v].tons;
-        const drivers=[...vehGroups[v].drivers].join(", ");
+
+      let arr=Object.keys(vehGroups).map(key=>{
+        const v=vehGroups[key].veh;
+        const y=vehGroups[key].year_key;
+        const trips=vehGroups[key].trips;
+        const tons=vehGroups[key].tons;
+        const drivers=[...vehGroups[key].drivers].join(", ");
         const vehRow=vehiclesData.find(x=>x["رقم المركبة"]===v)||{};
         const areaRow=areasData.find(x=>x["رقم المركبة"]===v)||{};
-        const fuelRow=fuelData.find(x=>x["رقم المركبة"]===v)||{};
-        let fuel=0; Object.keys(fuelRow).forEach(k=>{if(k!=="رقم المركبة") fuel+=(+fuelRow[k]||0);});
-        const maintRow=maintData.find(x=>x["رقم المركبة"]===v)||{};
-        const maint=(+maintRow["كلفة الصيانة"]||0);
+
+        const fuel=sumFuelForVehicle(v,y);
+        const maint=maintForVehicle(v,y);
 
         const cap_m3=parseFloat(vehRow["سعة المركبة بالمتر المكعب"]||0);
         const density=parseFloat(vehRow["كثافة التحميل"]||0);
